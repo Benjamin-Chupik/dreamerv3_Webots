@@ -12,7 +12,7 @@ Implement Dreamerv3 to train robots in webots
 
 
 
-# Installing
+# Installing Linux
 1) `pip install --upgrade pip setuptools==57.5.0`
 2) `pip install dreamerv3`
 3) for GPU to work: 
