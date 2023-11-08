@@ -22,6 +22,8 @@ pip install --upgrade protobuf==3.20.1
 pip uninstall jax jaxlib
 pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 ```
+pip install pyglet==1.5.27
+    fixes rendering error for gym
 `pip install pyglet`
 # Installing - Mac
 1) `pip install --upgrade pip setuptools==57.5.0`
