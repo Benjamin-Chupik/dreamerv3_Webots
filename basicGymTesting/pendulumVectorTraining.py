@@ -42,7 +42,7 @@ def main():
     from embodied.envs import from_gym
 
     # env = crafter.Env()  # Replace this with your Gym env.
-    env = gym.make("Pendulum-v0")  # this needs box2d-py installed also
+    env = gym.make("Pendulum-v1")  # this needs box2d-py installed also
     env = from_gym.FromGym(
         env, obs_key="state_vec"
     )  # I found I had to specify a different obs_key than the default of 'image'

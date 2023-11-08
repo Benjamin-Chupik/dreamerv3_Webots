@@ -6,10 +6,28 @@ from embodied.envs import from_gym
 
 
 # Configuration
-logdir = embodied.Path('~/logdir/pendulum')
-print("1")
-config = embodied.Config.load(logdir / 'config.yaml')
+logdir = embodied.Path('/logdir/pendulum')
+
+config = embodied.Config(dreamerv3.configs["defaults"])
+config = config.update(dreamerv3.configs["medium"])
+config = config.update(
+    {
+        "logdir": f"logdir/pendulum",  # this was just changed to generate a new log dir every time for testing
+        "run.train_ratio": 64,
+        "run.log_every": 30,
+        "batch_size": 16,
+        "jax.prealloc": False,
+        "encoder.mlp_keys": ".*",
+        "decoder.mlp_keys": ".*",
+        "encoder.cnn_keys": "$^",
+        "decoder.cnn_keys": "$^",
+        "jax.platform": "cpu",  # I don't have a gpu locally
+    }
+)
+config = embodied.Flags(config).parse()
 print("2")
+
+
 # Making env
 env = gym.make("Pendulum-v1")
 env = from_gym.FromGym(env, obs_key='vector')  # I found I had to specify a different obs_key than the default of 'image'
@@ -32,10 +50,7 @@ N = 1000
 print("Starting movement")
 for step in np.arange(N):
     obs = env.step(act)
-    print("got step",obs)
+    obs = {k: v[None] for k, v in obs.items()}
     act, state = agent.policy(obs, state, mode='eval')
-    print("got actions")
     act = {'action': act['action'][0], 'reset': obs['is_last'][0]}
-    print(obs)
-
 env.close()
