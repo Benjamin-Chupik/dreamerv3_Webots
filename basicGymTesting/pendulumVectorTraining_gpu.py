@@ -6,23 +6,20 @@ def main():
     warnings.filterwarnings("ignore", ".*truncated to dtype int32.*")
 
     # See configs.yaml for all options.
-    # config = embodied.Config(dreamerv3.configs["defaults"])
-    config = embodied.Config(
-        dreamerv3.configs["defaultsbasicGymTesting/pendulumVectorTraining.py"]
-    )
+    config = embodied.Config(dreamerv3.configs["defaults"])
     config = config.update(dreamerv3.configs["medium"])
     config = config.update(
         {
-            "logdir": f"basicGymTesting/logdir/pendulumImage",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"basicGymTesting/logdir/pendulumGPU",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
             "run.log_every": 30,
             "batch_size": 16,
             "jax.prealloc": False,
             "encoder.mlp_keys": ".*",
             "decoder.mlp_keys": ".*",
-            "encoder.cnn_keys": "image",
-            "decoder.cnn_keys": "image",
-            "jax.platform": "cpu",  # I don't have a gpu locally
+            "encoder.cnn_keys": "$^",
+            "decoder.cnn_keys": "$^",
+            # "jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
@@ -47,7 +44,7 @@ def main():
     # env = crafter.Env()  # Replace this with your Gym env.
     env = gym.make("Pendulum-v0")  # this needs box2d-py installed also
     env = from_gym.FromGym(
-        env, obs_key="image"
+        env, obs_key="state_vec"
     )  # I found I had to specify a different obs_key than the default of 'image'
     env = dreamerv3.wrap_env(env, config)
     env = embodied.BatchEnv([env], parallel=False)
