@@ -19,7 +19,7 @@ def main():
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "$^",
             "decoder.cnn_keys": "$^",
-            # "jax.platform": "cpu",  # I don't have a gpu locally
+            #"jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()

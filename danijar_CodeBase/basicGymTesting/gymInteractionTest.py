@@ -12,7 +12,7 @@ def main():
     config = config.update(dreamerv3.configs["medium"])
     config = config.update(
         {
-            "logdir": f"basicGymTesting/logdir/pendulumGPU",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"basicGymTesting/logdir/LunarLanderGPU",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
             "run.log_every": 30,
             "batch_size": 16,
@@ -21,7 +21,7 @@ def main():
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "$^",
             "decoder.cnn_keys": "$^",
-            # "jax.platform": "cpu",  # I don't have a gpu locally
+            "jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
@@ -32,7 +32,7 @@ def main():
         step,
         [
             embodied.logger.TerminalOutput(),
-            embodied.logger.JSONLOutput(logdir, "metrics.jsonl"),
+            embodied.logger.JSONLOutput(logdir, "LunarLander-v2"),
             embodied.logger.TensorBoardOutput(logdir),
             # embodied.logger.WandBOutput(logdir.name, config),
             # embodied.logger.MLFlowOutput(logdir.name),
@@ -44,7 +44,7 @@ def main():
     from embodied.envs import from_gym
 
     # env = crafter.Env()  # Replace this with your Gym env.
-    env = gym.make("Pendulum-v0")  # this needs box2d-py installed also
+    env = gym.make("LunarLander-v2")  # this needs box2d-py installed also
     env = from_gym.FromGym(
         env, obs_key="state_vec"
     )  # I found I had to specify a different obs_key than the default of 'image' or 'state_vec'

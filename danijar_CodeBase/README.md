@@ -1,15 +1,7 @@
 # dreamerv3_webots
 Implement Dreamerv3 to train robots in webots
 
-# TODO
-- [ ] Basic Dreamer Setup
-    - [ ] Basic Gym Training
-        - [ ] Training with any gym environment using vectors
-        - [ ] Using tringing to interact with gym env graphicly
-        - [ ] Training with any gym environment using picture
-        - [ ] Training time comparison between vectors and picture
-    - [ ] WeBots Environment into gym interface
-
+This folder uses the code library from the author of the DreamerV3 Paper
 
 
 # Installing - Linux
