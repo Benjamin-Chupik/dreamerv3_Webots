@@ -17,6 +17,7 @@ pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-re
 pip install pyglet==1.5.27
     fixes rendering error for gym
 `pip install pyglet`
+sudo apt install some other thing for gifs
 # Installing - Mac
 1) `pip install --upgrade pip setuptools==57.5.0`
 2) `conda install -c conda-forge tensorflow-cpu`

@@ -10,16 +10,16 @@ def main():
     config = config.update(dreamerv3.configs["medium"])
     config = config.update(
         {
-            "logdir": f"basicGymTesting/logdir/LunarLanderImageGPU",  # this was just changed to generate a new log dir every time for testing
-            "run.train_ratio": 64,
+            "logdir": f"danijar_CodeBase/basicGymTesting/logdir/LunarLanderImageGPU",  # this was just changed to generate a new log dir every time for testing
+            "run.train_ratio": 1024,
             "run.log_every": 30,
-            "batch_size": 16,
+            "batch_size": 32,
             "jax.prealloc": False,
             "encoder.mlp_keys": ".*",
             "decoder.mlp_keys": ".*",
-            "encoder.cnn_keys": "$^",
-            "decoder.cnn_keys": "$^",
-            #"jax.platform": "cpu",  # I don't have a gpu locally
+            "encoder.cnn_keys": "image",
+            "decoder.cnn_keys": "image",
+            # "jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
@@ -44,7 +44,7 @@ def main():
     from embodied.envs import from_gym
 
     # env = crafter.Env()  # Replace this with your Gym env.
-    env = LunarLanderImageEnv  # this needs box2d-py installed also
+    env = LunarLanderImageEnv()  # this needs box2d-py installed also
     # env = gym.make("LunarLander-v2")
     env = from_gym.FromGym(
         env, obs_key="image"
@@ -85,12 +85,18 @@ class LunarLanderImageEnv(gym.Env):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        image_observation = self.render(mode="rgb_array")
+        image_observation = self.env.render(mode="rgb_array")
+        image_observation = cv2.resize(
+            image_observation, dsize=(64, 64), interpolation=cv2.INTER_CUBIC
+        )
         return image_observation, reward, done, info
 
     def reset(self):
         obs = self.env.reset()
-        image_observation = self.render(mode="rgb_array")
+        image_observation = self.env.render(mode="rgb_array")
+        image_observation = cv2.resize(
+            image_observation, dsize=(64, 64), interpolation=cv2.INTER_CUBIC
+        )
         return image_observation
 
     def render(self, mode="human"):

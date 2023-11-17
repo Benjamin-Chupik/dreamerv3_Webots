@@ -1,3 +1,4 @@
+# gym 0.19.0
 def main():
     import warnings
     import dreamerv3
@@ -6,23 +7,20 @@ def main():
     warnings.filterwarnings("ignore", ".*truncated to dtype int32.*")
 
     # See configs.yaml for all options.
-    # config = embodied.Config(dreamerv3.configs["defaults"])
-    config = embodied.Config(
-        dreamerv3.configs["defaultsbasicGymTesting/pendulumVectorTraining.py"]
-    )
+    config = embodied.Config(dreamerv3.configs["defaults"])
     config = config.update(dreamerv3.configs["medium"])
     config = config.update(
         {
-            "logdir": f"basicGymTesting/logdir/pendulumImage",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"danijar_CodeBase/basicGymTesting/logdir/PendulumImageGPU",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
-            "run.log_every": 30,
-            "batch_size": 16,
+            "run.log_every": 50,
+            "batch_size": 8,
             "jax.prealloc": False,
             "encoder.mlp_keys": ".*",
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "image",
             "decoder.cnn_keys": "image",
-            "jax.platform": "cpu",  # I don't have a gpu locally
+            # "jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
@@ -42,10 +40,13 @@ def main():
 
     # import crafter
     import gym
+
+    # from ..envs import LunarLanderImage
     from embodied.envs import from_gym
 
     # env = crafter.Env()  # Replace this with your Gym env.
-    env = gym.make("Pendulum-v0")  # this needs box2d-py installed also
+    env = PendulumImageEnv()  # this needs box2d-py installed also
+    # env = gym.make("LunarLander-v2")
     env = from_gym.FromGym(
         env, obs_key="image"
     )  # I found I had to specify a different obs_key than the default of 'image'
@@ -63,8 +64,96 @@ def main():
         logdir=config.logdir,
         batch_steps=config.batch_size * config.batch_length,
     )
-    embodied.run.train(agent, env, replay, logger, args)
-    # embodied.run.eval_only(agent, env, logger, args)
+    # embodied.run.train(agent, env, replay, logger, args)
+
+    checkpoint = embodied.Checkpoint()
+    checkpoint.agent = agent
+    checkpoint.load(logdir / "checkpoint.ckpt", keys=["agent"])
+
+    # -----------------------display stuff all from either embodied.core.driver or embodied.run.train
+
+    def eval(agent, env):
+        r_total = 0
+        from dreamerv3.embodied import convert
+
+        # Reset env
+        acts = {
+            k: convert(np.zeros((len(env),) + v.shape, v.dtype))
+            for k, v in env.act_space.items()
+        }
+        acts["reset"] = np.ones(len(env), bool)
+        state = None
+
+        # get innitial action
+        acts = {k: v for k, v in acts.items() if not k.startswith("log_")}
+
+        done = False
+        while True:
+            # get observation
+            obs = env.step(acts)
+            obs = {k: convert(v) for k, v in obs.items()}
+            assert all(len(x) == len(env) for x in obs.values()), obs
+
+            policy = lambda *args: agent.policy(*args, mode="eval")
+            acts, state = policy(obs, state)
+
+            # clean up actions
+            acts = {k: convert(v) for k, v in acts.items()}
+            if obs["is_last"].any():
+                mask = 1 - obs["is_last"]
+                # acts = {k: v * _expand(mask, len(v.shape)) for k, v in acts.items()}
+                acts = {k: v for k, v in acts.items() if not k.startswith("log_")}
+
+            acts["reset"] = obs["is_last"].copy()
+
+            print(acts)
+
+            env.render()
+
+    eval(agent, env)
+
+
+## Class
+import gym
+from gym import spaces
+import numpy as np
+import cv2
+
+
+class PendulumImageEnv(gym.Env):
+    def __init__(self):
+        super(PendulumImageEnv, self).__init__()
+        self.env = gym.make("Pendulum-v1")
+        self.observation_space = spaces.Box(
+            low=0, high=255, shape=(64, 64, 3), dtype=np.uint8
+        )
+        self.action_space = self.env.action_space
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        image_observation = self.env.render(mode="rgb_array")
+        image_observation = cv2.resize(
+            image_observation, dsize=(64, 64), interpolation=cv2.INTER_CUBIC
+        )
+        return image_observation, reward, done, info
+
+    def reset(self):
+        obs = self.env.reset()
+        image_observation = self.env.render(mode="rgb_array")
+        image_observation = cv2.resize(
+            image_observation, dsize=(64, 64), interpolation=cv2.INTER_CUBIC
+        )
+        return image_observation
+
+    def render(self, mode="human"):
+        if mode == "rgb_array":
+            screen = self.env.render("rgb_array")
+            return screen
+        else:
+            return self.env.render(mode)
+
+    def close(self):
+        self.env.close()
 
 
 if __name__ == "__main__":

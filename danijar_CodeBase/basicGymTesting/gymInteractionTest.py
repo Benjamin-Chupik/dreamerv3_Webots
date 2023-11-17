@@ -50,10 +50,7 @@ def main():
     )  # I found I had to specify a different obs_key than the default of 'image' or 'state_vec'
     env = dreamerv3.wrap_env(env, config)
     env = embodied.BatchEnv([env], parallel=False)
-
-    print("here---------------------------------------------")
     agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
-    print("---------------------------------------------")
     replay = embodied.replay.Uniform(
         config.batch_length, config.replay_size, logdir / "replay"
     )
