@@ -12,7 +12,11 @@ def main():
     config = config.update(dreamerv3.configs["medium"])
     config = config.update(
         {
+<<<<<<< Updated upstream:danijar_CodeBase/basicGymTesting/gymInteractionTest.py
             "logdir": f"basicGymTesting/logdir/LunarLanderGPU",  # this was just changed to generate a new log dir every time for testing
+=======
+            "logdir": f"logdir/pendulum",  # this was just changed to generate a new log dir every time for testing
+>>>>>>> Stashed changes:basicGymTesting/gymInteractionTest.py
             "run.train_ratio": 64,
             "run.log_every": 30,
             "batch_size": 16,
@@ -44,7 +48,11 @@ def main():
     from embodied.envs import from_gym
 
     # env = crafter.Env()  # Replace this with your Gym env.
+<<<<<<< Updated upstream:danijar_CodeBase/basicGymTesting/gymInteractionTest.py
     env = gym.make("LunarLander-v2")  # this needs box2d-py installed also
+=======
+    env = gym.make("Pendulum-v1")  # this needs box2d-py installed also
+>>>>>>> Stashed changes:basicGymTesting/gymInteractionTest.py
     env = from_gym.FromGym(
         env, obs_key="state_vec"
     )  # I found I had to specify a different obs_key than the default of 'image' or 'state_vec'
@@ -89,6 +97,7 @@ def main():
         obs = {k: convert(v) for k, v in obs.items()}
         assert all(len(x) == len(env) for x in obs.values()), obs
 
+        
         policy = lambda *args: agent.policy(*args, mode="eval")
         acts, state = policy(obs, state)
 
@@ -96,6 +105,7 @@ def main():
         acts = {k: convert(v) for k, v in acts.items()}
         if obs["is_last"].any():
             mask = 1 - obs["is_last"]
+<<<<<<< Updated upstream:danijar_CodeBase/basicGymTesting/gymInteractionTest.py
             # acts = {k: v * _expand(mask, len(v.shape)) for k, v in acts.items()}
             acts = {k: v for k, v in acts.items() if not k.startswith("log_")}
 
@@ -105,6 +115,14 @@ def main():
 
         env.render()
         # sleep(0.1)
+=======
+            #acts = {k: v * _expand(mask, len(v.shape)) for k, v in acts.items()}
+            acts = {k: v for k, v in acts.items() if not k.startswith("log_")}
+        acts["reset"] = obs["is_last"].copy()
+
+        # print(acts)
+        env.render()
+>>>>>>> Stashed changes:basicGymTesting/gymInteractionTest.py
         # done = env.done
 
 
