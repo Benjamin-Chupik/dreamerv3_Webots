@@ -7,8 +7,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.308549835985451 0.30893743801648216 0.8996414052861083 1.675119411026942
-  position 0.010639575060094416 -3.4082766261344326 2.7577595228085023
+  orientation -0.33609214699544326 0.33525449969833354 0.8801400395164474 1.7006083610591427
+  position 0.021437616748790612 -7.718250853277171 6.611345170497544
 }
 TexturedBackground {
 }
@@ -17,8 +17,8 @@ TexturedBackgroundLight {
 RectangleArena {
 }
 DEF ROBOT Robot {
-  translation -0.11340195567473658 1.641740274058552e-07 0.03947579589914015
-  rotation 0.9999998363649577 0.00040453110865225876 -0.00040450542612574254 1.5707964901444926
+  translation 0 0 0.04
+  rotation 1 0 0 1.5708
   children [
     DEF HINGE_COVER Solid {
       translation 0 0.03 -3.469446951953614e-18
@@ -47,7 +47,7 @@ DEF ROBOT Robot {
     }
     DEF WHEEL1 HingeJoint {
       jointParameters HingeJointParameters {
-        position 1.436827990061924
+        position 6.723540149111039e-17
         axis 0 0 1
         anchor 0.06 0 0.05
       }
@@ -57,8 +57,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint Solid {
-        translation 0.0599868614230004 2.7844877548058706e-06 0.050000010543824816
-        rotation 1.767119074072973e-08 -1.1855470786775414e-09 0.9999999999999999 3.0076280330739964
+        translation 0.060001004644818584 1.339276918416963e-05 0.050000010543824816
+        rotation 1.7671082538995992e-08 -1.7671248834016876e-08 0.9999999999999998 1.5708000430119498
         children [
           DEF WHEEL Shape {
             appearance PBRAppearance {
@@ -76,13 +76,11 @@ DEF ROBOT Robot {
         boundingObject USE WHEEL
         physics Physics {
         }
-        linearVelocity -0.19987965242483902 -4.919016287215085e-09 -0.0002008760440676085
-        angularVelocity 1.3086089069174324e-07 -4.997075194644284 1.8265482953804372e-08
       }
     }
     DEF WHEEL2 HingeJoint {
       jointParameters HingeJointParameters {
-        position 1.4370622941546154
+        position 6.670640318240083e-17
         axis 0 0 1
         anchor -0.06 0 0.05
       }
@@ -92,8 +90,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint Solid {
-        translation -0.06000090096836669 -9.846547139414678e-07 0.05000000952472374
-        rotation 1.7609764172535464e-08 -1.179356952837253e-09 0.9999999999999999 3.0078622511442483
+        translation -0.060001095993954395 7.616338723251721e-07 0.05000000952472374
+        rotation 1.76096540431902e-08 -1.7609826183889808e-08 0.9999999999999997 1.5707999569897093
         children [
           USE WHEEL
         ]
@@ -101,13 +99,11 @@ DEF ROBOT Robot {
         boundingObject USE WHEEL
         physics Physics {
         }
-        linearVelocity -0.1998739063359079 -5.552028857666023e-09 0.00020187149616262418
-        angularVelocity 1.3091537151664616e-07 -4.997074737130075 1.8267353689733368e-08
       }
     }
     DEF WHEEL3 HingeJoint {
       jointParameters HingeJointParameters {
-        position 1.4368279893360763
+        position 1.0324509589061627e-16
         axis 0 0 1
         anchor 0.06 0 -0.05
       }
@@ -117,8 +113,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint Solid {
-        translation 0.05998686141831208 2.783635030965621e-06 -0.05000000738328558
-        rotation -1.767148494178095e-08 1.1855632911050781e-09 0.9999999999999998 3.00762803234813
+        translation 0.06000100379909951 1.3392659934531687e-05 -0.05000000738328558
+        rotation -1.7671380018270767e-08 1.7671539284228046e-08 0.9999999999999998 1.5708000430119113
         children [
           USE WHEEL
         ]
@@ -126,13 +122,11 @@ DEF ROBOT Robot {
         boundingObject USE WHEEL
         physics Physics {
         }
-        linearVelocity -0.19987965159783394 -4.918995758665926e-09 -0.000200875968073058
-        angularVelocity 1.3085940107214452e-07 -4.997075194578334 1.8288059429288004e-08
       }
     }
     DEF WHEEL4 HingeJoint {
       jointParameters HingeJointParameters {
-        position 1.4370622937793145
+        position -2.6895122773572173e-17
         axis 0 0 1
         anchor -0.06 0 -0.05
       }
@@ -142,8 +136,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint Solid {
-        translation -0.06000090097289097 -9.855076969680666e-07 -0.05000000839401549
-        rotation -1.7610118360645984e-08 1.179380522235165e-09 0.9999999999999999 3.007862250769049
+        translation -0.060001096839924606 7.615246225854488e-07 -0.05000000839401549
+        rotation -1.761000837263908e-08 1.761018020913388e-08 0.9999999999999997 1.5707999569897055
         children [
           USE WHEEL
         ]
@@ -151,13 +145,11 @@ DEF ROBOT Robot {
         boundingObject USE WHEEL
         physics Physics {
         }
-        linearVelocity -0.1998739055088794 -5.552005133832994e-09 0.0002018715728540608
-        angularVelocity 1.309137499463944e-07 -4.997074737064093 1.829024811874905e-08
       }
     }
     DEF POLE HingeJoint {
       jointParameters HingeJointParameters {
-        position -0.0077152892796044465
+        position -4.812689688184746e-16
         axis 0 0 1
         anchor 0 0.03000000000047226 0
         minStop -1.3
@@ -169,8 +161,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint Solid {
-        translation 0.0033921165438652347 0.5299924696924141 -5.369584240411189e-07
-        rotation -0.5799570513535945 -0.5760422460433486 0.5760426627938059 2.090487879907069
+        translation -0.0004655326854983616 0.5300037594690288 -5.369584240411801e-07
+        rotation -0.57698744109641 -0.577531387769005 0.5775318077462263 2.0949379676602047
         children [
           DEF POLE_ENDPOINT Solid {
             translation 0.5000000000000002 0 0
@@ -208,8 +200,6 @@ DEF ROBOT Robot {
           density -1
           mass 0.2
         }
-        linearVelocity -0.04963344193501065 -4.026328636798203e-09 -0.00023833488014715154
-        angularVelocity -2.44580123257183e-09 0.2752595025374885 1.652164089943571e-08
       }
     }
   ]
@@ -220,6 +210,4 @@ DEF ROBOT Robot {
   }
   controller "robot_supervisor_controller"
   supervisor TRUE
-  linearVelocity -0.19986453066030138 -5.235454301930538e-09 3.525331557071531e-05
-  angularVelocity 4.4374758747560266e-09 0.002924535111119987 1.661685839284272e-08
 }
