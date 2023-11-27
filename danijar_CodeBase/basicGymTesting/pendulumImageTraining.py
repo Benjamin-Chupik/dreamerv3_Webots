@@ -7,7 +7,7 @@ def main():
     # adds the parent directory to the path
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))  
     # imports the environment class
-    import envs.lunarLanderImage as envFile
+    import envs.pendulumImage as envFile
  
 
     warnings.filterwarnings("ignore", ".*truncated to dtype int32.*")
@@ -16,7 +16,7 @@ def main():
     config = embodied.Config(dreamerv3.configs["defaults"])
     config = config.update(dreamerv3.configs["medium"])
     config = envFile.defaultConfig(config)
-    config = config.update({"logdir": f"danijar_CodeBase/basicGymTesting/logdir/LunarLanderImageGPU"})
+    config = config.update({"logdir": f"danijar_CodeBase/basicGymTesting/logdir/PendulumImageGPU"})
 
     # innitial log written
     config = embodied.Flags(config).parse()

@@ -79,7 +79,8 @@ def main():
             pass
             
         def apply_action(self, action):
-            action = int(action[0])
+            print(action)
+            action = int(action)
 
             if action == 0:
                 motor_speed = 5.0

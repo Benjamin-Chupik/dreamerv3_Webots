@@ -208,6 +208,6 @@ DEF ROBOT Robot {
     density -1
     mass 2
   }
-  controller "robot_supervisor_controller"
+  controller "robot_supervisor_controller_dreamer"
   supervisor TRUE
 }
