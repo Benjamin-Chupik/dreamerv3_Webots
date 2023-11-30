@@ -60,7 +60,9 @@ class PendulumEnv(gym.Env):
 
         # SPACEY
         self.action_space = spaces.Box(low=-1, high=1,  shape=(2,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=0, high=1000,  shape=(8,), dtype=np.float32)
+        self.observation_space = spaces.Box(
+            low=0, high=255, shape=(32, 32, 3), dtype=np.uint8
+        )
         self.seed()
 
     def seed(self, seed=None):
@@ -69,6 +71,7 @@ class PendulumEnv(gym.Env):
 
     def step(self, u):
         ## SNEAKY WEBOTS STEP
+        self.img = np.asarray(self.camera.getImageArray())
 
         self.robot.step(self.timestep)
         self.timespent += self.timestep
@@ -82,10 +85,10 @@ class PendulumEnv(gym.Env):
         if self.timespent > 1e4: # time in ms
             done = True
 
-        return self._get_obs(), np.sum(self._get_obs())**2/1e7, done, {}
+        return self._get_obs(), 1, done, {}
 
     def reset(self):
-        self.psValues = np.zeros((8,), dtype=np.float32)
+        self.img = np.zeros((32,32,3), dtype=np.uint8)
         self.timespent = 0
 
         self.trans_field.setSFVec3f([0,0,0])
@@ -95,12 +98,8 @@ class PendulumEnv(gym.Env):
         return self._get_obs()
 
     def _get_obs(self):
-        self.psValues = []
-        for i in range(8):
-            self.psValues.append(self.ps[i].getValue())
-        self.psValues = np.asarray(self.psValues, dtype=np.float32)
-        return self.psValues
-
+        return self.img
+    
     def render(self, mode="human"):
         pass
 
@@ -130,8 +129,8 @@ config = config.update(
         "jax.prealloc": False,
         "encoder.mlp_keys": ".*",
         "decoder.mlp_keys": ".*",
-        "encoder.cnn_keys": "$^",
-        "decoder.cnn_keys": "$^",
+        "encoder.cnn_keys": "image",
+        "decoder.cnn_keys": "image",
         "jax.platform": "cpu",  # I don't have a gpu locally
     }
 )
@@ -156,7 +155,7 @@ from embodied.envs import from_gym
 
 env = PendulumEnv() # 
 env = from_gym.FromGym(
-    env, obs_key="state_vec"
+    env, obs_key="image"
 )  # I found I had to specify a different obs_key than the default of 'image'
 env = dreamerv3.wrap_env(env, config)
 env = embodied.BatchEnv([env], parallel=False)
