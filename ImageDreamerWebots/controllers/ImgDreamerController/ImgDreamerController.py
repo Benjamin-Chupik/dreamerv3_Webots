@@ -89,7 +89,7 @@ class PendulumEnv(gym.Env):
         self.rightMotor.setVelocity(u[1] * self.maxspeed)
 
         done = False
-        if self.timespent > 2e4: # time in ms
+        if self.timespent > 3e4: # time in ms
             done = True
         
         # REWARDS
