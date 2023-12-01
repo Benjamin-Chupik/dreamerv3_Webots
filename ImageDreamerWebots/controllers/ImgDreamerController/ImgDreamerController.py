@@ -98,6 +98,7 @@ class PendulumEnv(gym.Env):
         
         if self.d_to_goal < self.epsilon:
             self.reward = 100
+            done = True
         else:
             self.reward = 0
 
@@ -115,11 +116,20 @@ class PendulumEnv(gym.Env):
         # reset robot
         self.robot_trans.setSFVec3f([0,0,0])
         self.robot_rot.setSFRotation([1,0,0,0])
-
         self.robot_node.resetPhysics()
         self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
-        self.img = np.asarray(self.camera.getImageArray())
 
+        # reset ball
+        corners = np.array([-0.45, 0.45])
+        pos = np.random.choice(corners, 2)
+        newpos = np.zeros(3)
+        newpos[2] = 0.05
+        newpos[:2] = pos
+        self.ball_trans.setSFVec3f(list(newpos))
+
+        # Get observation
+        self.img = np.asarray(self.camera.getImageArray())
+        np.save('beepyview', self.img)
         return self._get_obs()
 
     def _get_obs(self):
@@ -130,7 +140,7 @@ class PendulumEnv(gym.Env):
         d1 = self._distance(self.robot_pos, self.Obs1_pos)
         d2 = self._distance(self.robot_pos, self.Obs2_pos)
         d3 = self._distance(self.robot_pos, self.Obs3_pos)
-        prox = 0.2
+        prox = self.epsilon
 
         if d1 < prox:
             total += -0.5*(1/d1-1/prox)**2

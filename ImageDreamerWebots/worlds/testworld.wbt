@@ -32,7 +32,7 @@ RectangleArena {
     colorOverride 0 0 1
   }
 }
-SolidBox {
+DEF Obstacle1 SolidBox {
   translation 0.24 -0.25 0.05
   name "box(2)"
   size 0.1 0.1 0.1
@@ -47,7 +47,7 @@ SolidBox {
     metalness 0
   }
 }
-SolidBox {
+DEF Obstacle2 SolidBox {
   translation -0.22 0.04 0.05
   name "box(1)"
   size 0.1 0.1 0.1
@@ -63,10 +63,6 @@ SolidBox {
   }
 }
 DEF _BEEPY_ E-puck {
-  hidden position_0_0 -80.66808891722773
-  hidden position_0_1 -59.44925031053369
-  hidden rotation_1 0 -1 0 5.269865231072697
-  hidden rotation_2 0 1 0 3.3826027612621723
   controller "ImgDreamerController"
   supervisor TRUE
   camera_width 32
@@ -77,7 +73,7 @@ DEF BALL Ball {
   color 1 0 0
   radius 0.05
 }
-SolidBox {
+DEF Obstacle3 SolidBox {
   translation 0.24 0.24 0.05
   size 0.1 0.1 0.1
   appearance PBRAppearance {
