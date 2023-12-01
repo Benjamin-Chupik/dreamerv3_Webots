@@ -37,18 +37,20 @@ class PendulumEnv(gym.Env):
         self.trans_field = self.robot_node.getField("translation")
         self.rot_field = self.robot_node.getField("rotation")
 
+        self.ball = self.supervisor.getFromDef("BALL")
+        self.ball_trans= self.ball.getField("translation")
 
-        print(self.robot_node)
+        # print(self.robot_node)
         # initialize devices
-        self.ps = []
-        self.psNames = [
-            'ps0', 'ps1', 'ps2', 'ps3',
-            'ps4', 'ps5', 'ps6', 'ps7'
-        ]
+        # self.ps = []
+        # self.psNames = [
+        #     'ps0', 'ps1', 'ps2', 'ps3',
+        #     'ps4', 'ps5', 'ps6', 'ps7'
+        # ]
 
-        for i in range(8):
-            self.ps.append(self.robot.getDevice(self.psNames[i]))
-            self.ps[i].enable(self.timestep)
+        # for i in range(8):
+        #     self.ps.append(self.robot.getDevice(self.psNames[i]))
+        #     self.ps[i].enable(self.timestep)
 
         self.leftMotor = self.robot.getDevice('left wheel motor')
         self.rightMotor = self.robot.getDevice('right wheel motor')
@@ -82,15 +84,23 @@ class PendulumEnv(gym.Env):
         self.rightMotor.setVelocity(u[1] * self.maxspeed)
 
         done = False
-        if self.timespent > 1e4: # time in ms
+        if self.timespent > 2e4: # time in ms
             done = True
+        
+        # REWARDS
+        self.robot_pos = np.asarray(self.trans_field.getSFVec3f())
+        self.reward = 1/np.sum((self.robot_pos-self.goal)**2)
 
-        return self._get_obs(), 1, done, {}
+        return self._get_obs(), self.reward, done, {}
 
     def reset(self):
+
+        self.goal = np.asarray(self.ball_trans.getSFVec3f())
+
         self.img = np.zeros((32,32,3), dtype=np.uint8)
         self.timespent = 0
 
+        # reset robot
         self.trans_field.setSFVec3f([0,0,0])
         self.rot_field.setSFRotation([1,0,0,0])
         self.robot_node.resetPhysics()

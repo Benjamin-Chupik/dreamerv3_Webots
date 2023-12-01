@@ -5,12 +5,13 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/WoodenBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/gctronic/e-puck/protos/E-puck.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/balls/protos/Ball.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.27810793185437355 0.6027842133415148 0.7478684178289216 1.1055406798796241
-  position -0.7654096934133241 -1.053503991914563 1.0044326230672638
+  orientation 0.008352005129816743 0.9998155907195057 -0.017292442410417105 0.899693553465182
+  position -1.3181946481015654 -0.3235420276798567 1.5677950811556614
 }
 TexturedBackground {
   skyColor [
@@ -24,12 +25,10 @@ RectangleArena {
   wallHeight 0.05
 }
 DEF _BEEPY_ E-puck {
-  hidden position_0_0 3.0956066943559985e-08
-  hidden position_0_1 3.095608112638667e-08
-  hidden rotation_1 0 1 0 2.9802322387695313e-08
-  hidden rotation_2 0 1 0 2.9802322387695313e-08
-  translation 9.677344629240318e-11 1.7815266609015336e-11 -6.391454876114068e-05
-  rotation 0.9998611881359452 -0.01666146628853836 7.015071239881699e-07 1.190899045989971e-07
+  hidden position_0_0 -80.66808891722773
+  hidden position_0_1 -59.44925031053369
+  hidden rotation_1 0 -1 0 5.269865231072697
+  hidden rotation_2 0 1 0 3.3826027612621723
   controller "epuck_go_forward"
   supervisor TRUE
   camera_width 32
@@ -48,4 +47,9 @@ WoodenBox {
 WoodenBox {
   translation 0.33 0.2 0.05
   size 0.1 0.1 0.1
+}
+DEF BALL Ball {
+  translation 0.45 0.45 0.05
+  color 1 0 0
+  radius 0.05
 }

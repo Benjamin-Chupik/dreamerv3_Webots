@@ -5,12 +5,13 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/WoodenBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/gctronic/e-puck/protos/E-puck.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/balls/protos/Ball.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.27810793185437355 0.6027842133415148 0.7478684178289216 1.1055406798796241
-  position -0.7654096934133241 -1.053503991914563 1.0044326230672638
+  orientation 0.15717833031676878 0.9649021709866283 -0.2103776910799342 1.3177281810483201
+  position -1.1327778722271975 0.5327200791939944 4.278807344327777
 }
 TexturedBackground {
   skyColor [
@@ -24,20 +25,26 @@ RectangleArena {
   wallHeight 0.05
 }
 DEF _BEEPY_ E-puck {
-  hidden position_0_0 3.0956066943559985e-08
-  hidden position_0_1 3.095608112638667e-08
-  hidden rotation_1 0 1 0 2.9802322387695313e-08
-  hidden rotation_2 0 1 0 2.9802322387695313e-08
-  translation 9.677344629240318e-11 1.7815266609015336e-11 -6.391454876114068e-05
-  rotation 0.9998611881359452 -0.01666146628853836 7.015071239881699e-07 1.190899045989971e-07
+  hidden position_0_0 18.59207375387222
+  hidden position_0_1 -35.04413366785974
+  hidden linearVelocity_0 1.9693198288542106e-05 -2.9655101149938197e-05 -7.784699948700681e-06
+  hidden angularVelocity_0 0.002023679182986787 0.0012882559200932933 -3.7448482839532494e-05
+  hidden rotation_1 0 1 0 6.025703139513047
+  hidden linearVelocity_1 -0.00047924876782391436 0.0008370178083356827 0.0001027562842175644
+  hidden angularVelocity_1 3.4070550440080725 -5.27562416230882 -0.03719337257675325
+  hidden rotation_2 0 1 0 2.6549781752177792
+  hidden linearVelocity_2 0.0006100145619368669 -0.0008677474583898254 1.202689081578631e-05
+  hidden angularVelocity_2 -2.9087743844567706 4.515908185227224 -0.028869371297842294
+  translation -0.04294213760501799 -0.05547403609315107 -0.00014361750914794122
+  rotation -3.1356001839051266e-05 0.00010306225927349458 -0.9999999941974859 2.5619789403292064
   controller "epuck_go_forward"
   supervisor TRUE
   camera_width 32
   camera_height 32
 }
-WoodenBox {
-  translation 0.04 -0.19 0.05
-  name "wooden box(1)"
+DEF BOXY WoodenBox {
+  translation -0.1941956360123529 -0.178110263898293 0.05
+  name ""
   size 0.1 0.1 0.1
 }
 WoodenBox {
@@ -48,4 +55,9 @@ WoodenBox {
 WoodenBox {
   translation 0.33 0.2 0.05
   size 0.1 0.1 0.1
+}
+DEF BALL Ball {
+  translation 0.45 0.45 0.05
+  color 1 0 0
+  radius 0.05
 }

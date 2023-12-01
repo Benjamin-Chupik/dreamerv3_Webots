@@ -34,6 +34,9 @@ class PendulumEnv(gym.Env):
         # Supervisor setup
         self.supervisor = Supervisor()
         self.robot_node = self.supervisor.getFromDef("_BEEPY_")
+        self.box_node = self.supervisor.getFromDef("BOXY")
+
+        self.box_pos = self.box_node.getField("translation")
         self.trans_field = self.robot_node.getField("translation")
         self.rot_field = self.robot_node.getField("rotation")
 
@@ -85,9 +88,17 @@ class PendulumEnv(gym.Env):
         return self._get_obs(), np.sum(self._get_obs())**2/1e7, done, {}
 
     def reset(self):
+        # set sensor values to 0
         self.psValues = np.zeros((8,), dtype=np.float32)
         self.timespent = 0
 
+        randpos = np.zeros(3)
+        randpos[:2] = np.random.random(2)-0.5
+        randpos[2] = 0.05
+
+        self.box_pos.setSFVec3f(list(randpos))
+
+        # reset robot position and rotation
         self.trans_field.setSFVec3f([0,0,0])
         self.rot_field.setSFRotation([1,0,0,0])
         self.robot_node.resetPhysics()
