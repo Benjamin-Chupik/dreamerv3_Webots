@@ -23,7 +23,7 @@ class PendulumEnv(gym.Env):
 
     def __init__(self):
         # INITIALIZING ROBOT
-        self.timestep = 500
+        self.timestep = 200
         self.maxspeed = 6.28
         self.epsilon = 0.15
 
