@@ -89,8 +89,8 @@ class PendulumEnv(gym.Env):
         
         # REWARDS
         self.robot_pos = np.asarray(self.trans_field.getSFVec3f())
-        self.reward = 1/np.sum((self.robot_pos-self.goal)**2)
-
+        self.reward = 1/np.sqrt(np.sum((self.robot_pos-self.goal)**2))
+        print(self.reward)
         return self._get_obs(), self.reward, done, {}
 
     def reset(self):
