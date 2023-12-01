@@ -97,7 +97,7 @@ class PendulumEnv(gym.Env):
         self.d_to_goal = np.sqrt(np.sum((self.robot_pos-self.goal)**2))
         
         if self.d_to_goal < self.epsilon:
-            self.reward = 100
+            self.reward = 1000
             done = True
         else:
             self.reward = 0
