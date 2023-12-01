@@ -97,12 +97,12 @@ class PendulumEnv(gym.Env):
         self.d_to_goal = np.sqrt(np.sum((self.robot_pos-self.goal)**2))
         
         if self.d_to_goal < self.epsilon:
-            self.reward = 1000
+            self.reward = 100
             done = True
         else:
             self.reward = 0
 
-        self.reward += np.sum(self.img[:,:,0])/(32*32*255)
+        # self.reward += np.sum(self.img[:,:,0])/(32*32*255)
         self.reward+= self._obs_avoidance()
         
         return self._get_obs(), self.reward, done, {}
