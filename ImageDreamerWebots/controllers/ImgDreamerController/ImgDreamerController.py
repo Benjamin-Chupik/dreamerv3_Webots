@@ -25,6 +25,7 @@ class PendulumEnv(gym.Env):
         # INITIALIZING ROBOT
         self.timestep = 500
         self.maxspeed = 6.28
+        self.epsilon = 0.15
 
         # create the Robot instance.
         self.robot = Robot()
@@ -34,24 +35,15 @@ class PendulumEnv(gym.Env):
         # Supervisor setup
         self.supervisor = Supervisor()
         self.robot_node = self.supervisor.getFromDef("_BEEPY_")
-        self.trans_field = self.robot_node.getField("translation")
-        self.rot_field = self.robot_node.getField("rotation")
-
+        self.robot_trans = self.robot_node.getField("translation")
+        self.robot_rot = self.robot_node.getField("rotation")
+        
+        # Ball object
         self.ball = self.supervisor.getFromDef("BALL")
         self.ball_trans= self.ball.getField("translation")
 
-        # print(self.robot_node)
-        # initialize devices
-        # self.ps = []
-        # self.psNames = [
-        #     'ps0', 'ps1', 'ps2', 'ps3',
-        #     'ps4', 'ps5', 'ps6', 'ps7'
-        # ]
 
-        # for i in range(8):
-        #     self.ps.append(self.robot.getDevice(self.psNames[i]))
-        #     self.ps[i].enable(self.timestep)
-
+        # Setting up  motors
         self.leftMotor = self.robot.getDevice('left wheel motor')
         self.rightMotor = self.robot.getDevice('right wheel motor')
         self.leftMotor.setPosition(float('inf'))
@@ -59,6 +51,19 @@ class PendulumEnv(gym.Env):
         self.leftMotor.setVelocity(0.0)
         self.rightMotor.setVelocity(0.0)
 
+        # Obstacles
+        self.Obs1 = self.supervisor.getFromDef("Obstacle1")
+        self.Obs1_trans= self.Obs1.getField("translation")
+        self.Obs1_pos = np.asarray(self.Obs1_trans.getSFVec3f())
+
+        self.Obs2 = self.supervisor.getFromDef("Obstacle2")
+        self.Obs2_trans= self.Obs2.getField("translation")
+        self.Obs2_pos = np.asarray(self.Obs2_trans.getSFVec3f())
+
+        self.Obs3 = self.supervisor.getFromDef("Obstacle3")
+        self.Obs3_trans= self.Obs3.getField("translation")
+        self.Obs3_pos = np.asarray(self.Obs3_trans.getSFVec3f())
+        print(self.Obs3_pos)
 
         # SPACEY
         self.action_space = spaces.Box(low=-1, high=1,  shape=(2,), dtype=np.float32)
@@ -75,9 +80,9 @@ class PendulumEnv(gym.Env):
         ## SNEAKY WEBOTS STEP
         self.img = np.asarray(self.camera.getImageArray())
 
+        # Update timestep
         self.robot.step(self.timestep)
         self.timespent += self.timestep
-        print(self.timespent)
         
         # write actuators inputs
         self.leftMotor.setVelocity(u[0] * self.maxspeed)
@@ -88,27 +93,56 @@ class PendulumEnv(gym.Env):
             done = True
         
         # REWARDS
-        self.robot_pos = np.asarray(self.trans_field.getSFVec3f())
-        self.reward = 1/np.sqrt(np.sum((self.robot_pos-self.goal)**2))
-        print(self.reward)
+        self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
+        self.d_to_goal = np.sqrt(np.sum((self.robot_pos-self.goal)**2))
+        
+        if self.d_to_goal < self.epsilon:
+            self.reward = 100
+        else:
+            self.reward = 0
+
+        self.reward += np.sum(self.img[:,:,0])/(32*32*255)
+        self.reward+= self._obs_avoidance()
+        
         return self._get_obs(), self.reward, done, {}
+    
 
     def reset(self):
 
         self.goal = np.asarray(self.ball_trans.getSFVec3f())
-
-        self.img = np.zeros((32,32,3), dtype=np.uint8)
         self.timespent = 0
 
         # reset robot
-        self.trans_field.setSFVec3f([0,0,0])
-        self.rot_field.setSFRotation([1,0,0,0])
+        self.robot_trans.setSFVec3f([0,0,0])
+        self.robot_rot.setSFRotation([1,0,0,0])
+
         self.robot_node.resetPhysics()
-        
+        self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
+        self.img = np.asarray(self.camera.getImageArray())
+
         return self._get_obs()
 
     def _get_obs(self):
         return self.img
+    
+    def _obs_avoidance(self):
+        total = 0
+        d1 = self._distance(self.robot_pos, self.Obs1_pos)
+        d2 = self._distance(self.robot_pos, self.Obs2_pos)
+        d3 = self._distance(self.robot_pos, self.Obs3_pos)
+        prox = 0.2
+
+        if d1 < prox:
+            total += -0.5*(1/d1-1/prox)**2
+        if d2 < prox:
+            total += -0.5*(1/d2-1/prox)**2
+        if d3 < prox:
+            total += -0.5*(1/d3-1/prox)**2
+        return total
+        
+
+    def _distance(self, pos1, pos2):
+        return np.sqrt(np.sum((pos1-pos2)**2))
     
     def render(self, mode="human"):
         pass

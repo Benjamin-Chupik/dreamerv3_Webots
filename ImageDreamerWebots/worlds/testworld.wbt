@@ -3,15 +3,17 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/WoodenBox.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/gctronic/e-puck/protos/E-puck.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/balls/protos/Ball.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Parquetry.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/BrushedAluminium.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/solids/protos/SolidBox.proto"
 
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.008352005129816743 0.9998155907195057 -0.017292442410417105 0.899693553465182
-  position -1.3181946481015654 -0.3235420276798567 1.5677950811556614
+  orientation -0.04528841707619718 -0.98692351721957 0.15469625217724492 5.706498808130532
+  position -3.722619452808136 0.37003030019392097 2.503782827341796
 }
 TexturedBackground {
   skyColor [
@@ -22,34 +24,70 @@ TexturedBackgroundLight {
 }
 RectangleArena {
   floorTileSize 0.25 0.25
-  wallHeight 0.05
+  floorAppearance Parquetry {
+    type "dark strip"
+    colorOverride 0 1 0
+  }
+  wallAppearance BrushedAluminium {
+    colorOverride 0 0 1
+  }
+}
+SolidBox {
+  translation 0.24 -0.25 0.05
+  name "box(2)"
+  size 0.1 0.1 0.1
+  appearance PBRAppearance {
+    baseColor 0 0 0
+    baseColorMap ImageTexture {
+      url [
+        "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/default/worlds/textures/tagged_wall.jpg"
+      ]
+    }
+    roughness 0.5
+    metalness 0
+  }
+}
+SolidBox {
+  translation -0.22 0.04 0.05
+  name "box(1)"
+  size 0.1 0.1 0.1
+  appearance PBRAppearance {
+    baseColor 0 0 0
+    baseColorMap ImageTexture {
+      url [
+        "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/default/worlds/textures/tagged_wall.jpg"
+      ]
+    }
+    roughness 0.5
+    metalness 0
+  }
 }
 DEF _BEEPY_ E-puck {
   hidden position_0_0 -80.66808891722773
   hidden position_0_1 -59.44925031053369
   hidden rotation_1 0 -1 0 5.269865231072697
   hidden rotation_2 0 1 0 3.3826027612621723
-  controller "epuck_go_forward"
+  controller "ImgDreamerController"
   supervisor TRUE
   camera_width 32
   camera_height 32
-}
-WoodenBox {
-  translation 0.04 -0.19 0.05
-  name "wooden box(1)"
-  size 0.1 0.1 0.1
-}
-WoodenBox {
-  translation -0.19 0.2 0.06
-  name "wooden box(2)"
-  size 0.1 0.1 0.1
-}
-WoodenBox {
-  translation 0.33 0.2 0.05
-  size 0.1 0.1 0.1
 }
 DEF BALL Ball {
   translation 0.45 0.45 0.05
   color 1 0 0
   radius 0.05
+}
+SolidBox {
+  translation 0.24 0.24 0.05
+  size 0.1 0.1 0.1
+  appearance PBRAppearance {
+    baseColor 0 0 0
+    baseColorMap ImageTexture {
+      url [
+        "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/default/worlds/textures/tagged_wall.jpg"
+      ]
+    }
+    roughness 0.5
+    metalness 0
+  }
 }
