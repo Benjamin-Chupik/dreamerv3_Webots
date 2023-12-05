@@ -88,29 +88,29 @@ class PendulumEnv(gym.Env):
         self.leftMotor.setVelocity(u[0] * self.maxspeed)
         self.rightMotor.setVelocity(u[1] * self.maxspeed)
 
-        done = False
-        if self.timespent > 3e4: # time in ms
-            done = True
         
-        # REWARDS
+        
         self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
         self.d_to_goal = np.sqrt(np.sum((self.robot_pos-self.goal)**2))
         
+        
+        
+        # check if done
+        done = False
+        if self.timespent > 3e4: # time in ms
+            done = True
         if self.d_to_goal < self.epsilon:
             self.reward = 100
             done = True
         else:
             self.reward = 0
-
-        # self.reward += np.sum(self.img[:,:,0])/(32*32*255)
+        # REWARDS
         self.reward+= self._obs_avoidance()
         
         return self._get_obs(), self.reward, done, {}
     
 
     def reset(self):
-
-        self.goal = np.asarray(self.ball_trans.getSFVec3f())
         self.timespent = 0
 
         # reset robot
@@ -119,17 +119,22 @@ class PendulumEnv(gym.Env):
         self.robot_node.resetPhysics()
         self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
 
-        # reset ball
+        # randomize ball pos
         corners = np.array([-0.45, 0.45])
         pos = np.random.choice(corners, 2)
         newpos = np.zeros(3)
         newpos[2] = 0.05
         newpos[:2] = pos
+
+        # set ball pos
         self.ball_trans.setSFVec3f(list(newpos))
+
+        # set goal value
+        self.goal = np.asarray(self.ball_trans.getSFVec3f())
 
         # Get observation
         self.img = np.asarray(self.camera.getImageArray())
-        np.save('beepyview', self.img)
+        # np.save('beepyview', self.img)
         return self._get_obs()
 
     def _get_obs(self):
@@ -173,7 +178,7 @@ warnings.filterwarnings("ignore", ".*truncated to dtype int32.*")
 
 # See configs.yaml for all options.
 config = embodied.Config(dreamerv3.configs["defaults"])
-config = config.update(dreamerv3.configs["medium"])
+config = config.update(dreamerv3.configs["large"])
 config = config.update(
     {
         "logdir": f"logdirtest",  # this was just changed to generate a new log dir every time for testing
