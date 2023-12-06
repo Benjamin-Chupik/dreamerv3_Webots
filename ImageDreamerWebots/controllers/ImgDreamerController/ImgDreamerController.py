@@ -110,12 +110,14 @@ class PendulumEnv(gym.Env):
 
     def reset(self):
         self.timespent = 0
+        
         # reset robot
         self.robot_trans.setSFVec3f([0,0,0])
         self.robot_rot.setSFRotation([1,0,0,0])
         self.robot_node.resetPhysics()
         self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
 
+        
         # randomize ball pos
         corners = np.array([-0.45, 0.45])
         pos = np.random.choice(corners, 2)
@@ -129,7 +131,9 @@ class PendulumEnv(gym.Env):
         # set goal value
         self.goal = np.asarray(self.ball_trans.getSFVec3f())
 
+
         # Get observation
+        self.robot.step(self.timestep)
         self.img = np.asarray(self.camera.getImageArray())
         # np.save('beepyview', self.img)
         return self._get_obs()

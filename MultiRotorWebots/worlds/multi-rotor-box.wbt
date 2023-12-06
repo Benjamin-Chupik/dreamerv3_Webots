@@ -1,0 +1,30 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/dji/mavic/protos/Mavic2Pro.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.30966779056688776 0.33887599545465014 0.8884080814524606 1.5990012539750895
+  position -0.5975626423566257 -3.8082097229843 1.7451937767740953
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 10 10
+}
+DEF Mavic2PRO Mavic2Pro {
+  controller "hover_controler"
+  supervisor TRUE
+  cameraSlot [
+    Camera {
+      width 32
+      height 32
+    }
+  ]
+}

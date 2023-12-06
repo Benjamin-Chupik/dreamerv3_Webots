@@ -1,0 +1,1 @@
+The goal of this is to have the multi rotor hover 5 meters directly up just to make sure webots and dreamer is working.
