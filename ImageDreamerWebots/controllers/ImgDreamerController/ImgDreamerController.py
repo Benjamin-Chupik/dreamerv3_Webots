@@ -37,7 +37,8 @@ class PendulumEnv(gym.Env):
         self.robot_node = self.supervisor.getFromDef("_BEEPY_")
         self.robot_trans = self.robot_node.getField("translation")
         self.robot_rot = self.robot_node.getField("rotation")
-        
+        self.robot_node.enableContactPointsTracking(self.timestep)
+
         # Ball object
         self.ball = self.supervisor.getFromDef("BALL")
         self.ball_trans= self.ball.getField("translation")
@@ -77,23 +78,19 @@ class PendulumEnv(gym.Env):
         return [seed]
 
     def step(self, u):
-        ## SNEAKY WEBOTS STEP
-        self.img = np.asarray(self.camera.getImageArray())
-
         # Update timestep
         self.robot.step(self.timestep)
         self.timespent += self.timestep
-        
+
+        ## SNEAKY WEBOTS STEP
+        self.img = np.asarray(self.camera.getImageArray())
+
         # write actuators inputs
         self.leftMotor.setVelocity(u[0] * self.maxspeed)
         self.rightMotor.setVelocity(u[1] * self.maxspeed)
 
-        
-        
         self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
         self.d_to_goal = np.sqrt(np.sum((self.robot_pos-self.goal)**2))
-        
-        
         
         # check if done
         done = False
@@ -104,15 +101,15 @@ class PendulumEnv(gym.Env):
             done = True
         else:
             self.reward = 0
-        # REWARDS
-        self.reward+= self._obs_avoidance()
         
+        # REWARDS
+        self.reward += self._obs_avoidance()
+        # print(self.robot_node.getContactPoints())
         return self._get_obs(), self.reward, done, {}
     
 
     def reset(self):
         self.timespent = 0
-
         # reset robot
         self.robot_trans.setSFVec3f([0,0,0])
         self.robot_rot.setSFRotation([1,0,0,0])
