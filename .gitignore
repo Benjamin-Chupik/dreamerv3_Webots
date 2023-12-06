@@ -2,3 +2,4 @@ logdir/
 __pycache__/
 logdirtest/
 beepyview.npy
+error_log.txt
