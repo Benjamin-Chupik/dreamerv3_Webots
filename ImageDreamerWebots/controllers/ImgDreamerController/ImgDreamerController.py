@@ -3,6 +3,8 @@ from controller import Camera
 
 import matplotlib.pyplot as plt
 import numpy as np
+import logging
+import random
 
 # time in [ms] of a simulation step
 
@@ -67,28 +69,51 @@ class PendulumEnv(gym.Env):
         print(self.Obs3_pos)
 
         # SPACEY
-        self.action_space = spaces.Box(low=-1, high=1,  shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=0, high=1,  shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(
             low=0, high=255, shape=(32, 32, 3), dtype=np.uint8
         )
         self.seed()
+        self._updateObs()
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
+    def _updateObs(self):
+        image_array = self.camera.getImageArray() # there is a 4th column for alpha
+        self.img = np.array(image_array) #np.array([r,g,b])
+        #plt.imshow(self.img)
+        #plt.show()
+
     def step(self, u):
+        ## SNEAKY WEBOTS STEP
+        self._updateObs()
+
+        lastPos = np.asarray(self.robot_trans.getSFVec3f())
+        lastPosToGoal = np.sqrt(np.sum((lastPos-self.goal)**2))
+        
         # Update timestep
         self.robot.step(self.timestep)
         self.timespent += self.timestep
 
-        ## SNEAKY WEBOTS STEP
-        self.img = np.asarray(self.camera.getImageArray())
+        curPos = np.asarray(self.robot_trans.getSFVec3f())
+        curPosToGoal = np.sqrt(np.sum((curPos-self.goal)**2))
+    
 
+        distTravledToGoal = -(curPosToGoal - lastPosToGoal)
+        #logging.error(f"Position Difference: {distTravledToGoal}")
+
+        
         # write actuators inputs
         self.leftMotor.setVelocity(u[0] * self.maxspeed)
         self.rightMotor.setVelocity(u[1] * self.maxspeed)
 
+        done = False
+        if self.timespent > (2*60) * 1e3: # time in ms
+            done = True
+        
+        # REWARDS
         self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
         self.d_to_goal = np.sqrt(np.sum((self.robot_pos-self.goal)**2))
         
@@ -101,23 +126,29 @@ class PendulumEnv(gym.Env):
             done = True
         else:
             self.reward = 0
+
+        # self.reward += np.sum(self.img[:,:,0])/(32*32*255)
+        #self.reward+= self._obs_avoidance()
+
+        self.reward+=distTravledToGoal*10**2
+
+        # Add a -1 reward for every step to incentivise getting there fast
+        self.reward+=-1
         
-        # REWARDS
-        self.reward += self._obs_avoidance()
-        # print(self.robot_node.getContactPoints())
         return self._get_obs(), self.reward, done, {}
     
 
     def reset(self):
+
         self.timespent = 0
-        
         # reset robot
+        
+        yaw = np.random.uniform(-np.pi, np.pi)
         self.robot_trans.setSFVec3f([0,0,0])
-        self.robot_rot.setSFRotation([1,0,0,0])
+        self.robot_rot.setSFRotation([0,0,1,yaw])
         self.robot_node.resetPhysics()
         self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
 
-        
         # randomize ball pos
         corners = np.array([-0.45, 0.45])
         pos = np.random.choice(corners, 2)
@@ -128,14 +159,24 @@ class PendulumEnv(gym.Env):
         # set ball pos
         self.ball_trans.setSFVec3f(list(newpos))
 
-        # set goal value
         self.goal = np.asarray(self.ball_trans.getSFVec3f())
 
-
         # Get observation
-        self.robot.step(self.timestep)
-        self.img = np.asarray(self.camera.getImageArray())
-        # np.save('beepyview', self.img)
+        self._updateObs()
+        # wait untill the image is not all black
+        i=0
+        while np.all(self._get_obs()==0):
+            i+=1
+            logging.error(f"Image is fully black for {i} steps on reset")
+            # Update timestep
+            self.robot.step(self.timestep)
+            self.timespent += self.timestep
+            self._updateObs()
+
+        np.save('beepyview', self.img)
+
+
+
         return self._get_obs()
 
     def _get_obs(self):
@@ -177,58 +218,65 @@ from dreamerv3 import embodied
 
 warnings.filterwarnings("ignore", ".*truncated to dtype int32.*")
 
-# See configs.yaml for all options.
-config = embodied.Config(dreamerv3.configs["defaults"])
-config = config.update(dreamerv3.configs["large"])
-config = config.update(
-    {
-        "logdir": f"logdirtest",  # this was just changed to generate a new log dir every time for testing
-        "run.train_ratio": 64,
-        "run.log_every": 30,
-        "batch_size": 16,
-        "jax.prealloc": False,
-        "encoder.mlp_keys": ".*",
-        "decoder.mlp_keys": ".*",
-        "encoder.cnn_keys": "image",
-        "decoder.cnn_keys": "image",
-        "jax.platform": "cpu",  # I don't have a gpu locally
-    }
-)
-config = embodied.Flags(config).parse()
+logging.basicConfig(filename='error_log.txt', level=logging.ERROR, format='%(asctime)s - %(levelname)s: %(message)s')
 
-logdir = embodied.Path(config.logdir)
-step = embodied.Counter()
-logger = embodied.Logger(
-    step,
-    [
-        embodied.logger.TerminalOutput(),
-        embodied.logger.JSONLOutput(logdir, "metrics.jsonl"),
-        embodied.logger.TensorBoardOutput(logdir),
-        # embodied.logger.WandBOutput(logdir.name, config),
-        # embodied.logger.MLFlowOutput(logdir.name),
-    ],
-)
+try:
+
+    # See configs.yaml for all options.
+    config = embodied.Config(dreamerv3.configs["defaults"])
+    config = config.update(dreamerv3.configs["large"])
+    config = config.update(
+        {
+            "logdir": f"logdir/noObsticle_large",  # this was just changed to generate a new log dir every time for testing
+            "run.train_ratio": 64,
+            "run.log_every": 30,
+            "batch_size": 8,
+            "jax.prealloc": False,
+            "encoder.mlp_keys": ".*",
+            "decoder.mlp_keys": ".*",
+            "encoder.cnn_keys": "image",
+            "decoder.cnn_keys": "image",
+            "jax.platform": "cpu",  # I don't have a gpu locally
+        }
+    )
+    config = embodied.Flags(config).parse()
+
+    logdir = embodied.Path(config.logdir)
+    step = embodied.Counter()
+    logger = embodied.Logger(
+        step,
+        [
+            embodied.logger.TerminalOutput(),
+            embodied.logger.JSONLOutput(logdir, "metrics.jsonl"),
+            embodied.logger.TensorBoardOutput(logdir),
+            # embodied.logger.WandBOutput(logdir.name, config),
+            # embodied.logger.MLFlowOutput(logdir.name),
+        ],
+    )
 
 
-import gym
-from embodied.envs import from_gym
+    import gym
+    from embodied.envs import from_gym
 
-env = PendulumEnv() # 
-env = from_gym.FromGym(
-    env, obs_key="image"
-)  # I found I had to specify a different obs_key than the default of 'image'
-env = dreamerv3.wrap_env(env, config)
-env = embodied.BatchEnv([env], parallel=False)
+    env = PendulumEnv() # 
+    env = from_gym.FromGym(
+        env, obs_key="image"
+    )  # I found I had to specify a different obs_key than the default of 'image'
+    env = dreamerv3.wrap_env(env, config)
+    env = embodied.BatchEnv([env], parallel=False)
 
-print("here---------------------------------------------")
-agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
-print("---------------------------------------------")
-replay = embodied.replay.Uniform(
-    config.batch_length, config.replay_size, logdir / "replay"
-)
-args = embodied.Config(
-    **config.run,
-    logdir=config.logdir,
-    batch_steps=config.batch_size * config.batch_length,
-)
-embodied.run.train(agent, env, replay, logger, args)
+    print("here---------------------------------------------")
+    agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
+    print("---------------------------------------------")
+    replay = embodied.replay.Uniform(
+        config.batch_length, config.replay_size, logdir / "replay"
+    )
+    args = embodied.Config(
+        **config.run,
+        logdir=config.logdir,
+        batch_steps=config.batch_size * config.batch_length,
+    )
+    embodied.run.train(agent, env, replay, logger, args)
+except Exception as e:
+    # Log the error
+    logging.error(f"An error occurred: {str(e)}", exc_info=True)
