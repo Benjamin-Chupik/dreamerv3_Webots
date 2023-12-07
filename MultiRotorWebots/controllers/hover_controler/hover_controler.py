@@ -26,7 +26,7 @@ class HoverEnv(gym.Env):
         # INITIALIZING ROBOT
         self.timestep = 64
         self.timespent = 0
-        # self.maxspeed = 6.28
+        self.maxspeed = 6.28
         self.epsilon = 0.15
         self.maxMotorSpeed = 560
 
@@ -211,7 +211,7 @@ config = embodied.Config(dreamerv3.configs["defaults"])
 config = config.update(dreamerv3.configs["medium"])
 config = config.update(
     {
-        "logdir": f"logdirtest",  # this was just changed to generate a new log dir every time for testing
+        "logdir": f"logdir/testing",  # this was just changed to generate a new log dir every time for testing
         "run.train_ratio": 64,
         "run.log_every": 30,
         "batch_size": 16,
@@ -220,7 +220,7 @@ config = config.update(
         "decoder.mlp_keys": ".*",
         "encoder.cnn_keys": "image",
         "decoder.cnn_keys": "image",
-        "jax.platform": "cpu",  # I don't have a gpu locally
+        #"jax.platform": "cpu",  # I don't have a gpu locally
     }
 )
 config = embodied.Flags(config).parse()

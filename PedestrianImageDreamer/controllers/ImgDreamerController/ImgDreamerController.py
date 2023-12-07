@@ -1,5 +1,6 @@
 from controller import Robot, DistanceSensor, Motor, Supervisor
 from controller import Camera
+import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +22,9 @@ import numpy as np
 class PendulumEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 30}
 
-    def __init__(self):
+    def __init__(self, gamma=1):
+        self.gamma = gamma
+        
         # INITIALIZING ROBOT
         self.timestep = 200
         self.maxtime = 1e5
@@ -83,9 +86,12 @@ class PendulumEnv(gym.Env):
         return [seed]
 
     def step(self, u):
+        lastPos = np.asarray(self.robot_trans.getSFVec3f())
         # Update timestep
         self.robot.step(self.timestep)
         self.timespent += self.timestep
+
+        curPos = np.asarray(self.robot_trans.getSFVec3f())
 
         ## Update image
         self.img = np.asarray(self.camera.getImageArray())
@@ -113,6 +119,13 @@ class PendulumEnv(gym.Env):
         else:
             self.reward = 0
         
+        # Reward Shaping
+        def phi(Position): # distance to goal
+            return np.sqrt(np.sum((Position-self.goal)**2))
+        rewardShapeTerm = phi(lastPos) - self.gamma*phi(curPos)
+        logging.error(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {phi(lastPos)} from goal.| Last Pos: {curPos},  {phi(curPos)} from goal.")
+        self.reward += rewardShapeTerm
+
         # REWARDS
         self.reward += 10*self._obs_avoidance()
         self.reward -= 0.1
@@ -198,66 +211,72 @@ class PendulumEnv(gym.Env):
             self.viewer = None
 
 ################################# DREAMER TIME ################################
+logging.basicConfig(filename='error_log.txt', level=logging.ERROR, format='%(asctime)s - %(levelname)s: %(message)s')
+
+try:
+
+    import warnings
+    import dreamerv3
+    from dreamerv3 import embodied
+
+    warnings.filterwarnings("ignore", ".*truncated to dtype int32.*")
+
+    # See configs.yaml for all options.
+    config = embodied.Config(dreamerv3.configs["defaults"])
+    config = config.update(dreamerv3.configs["large"])
+    config = config.update(
+        {
+            "logdir": f"logdir/PedTestFromScratch",  # this was just changed to generate a new log dir every time for testing
+            "run.train_ratio": 64,
+            "run.log_every": 30,
+            "batch_size": 16,
+            "jax.prealloc": False,
+            "encoder.mlp_keys": ".*",
+            "decoder.mlp_keys": ".*",
+            "encoder.cnn_keys": "image",
+            "decoder.cnn_keys": "image",
+            #"jax.platform": "cpu",  # I don't have a gpu locally
+        }
+    )
+    config = embodied.Flags(config).parse()
+
+    logdir = embodied.Path(config.logdir)
+    step = embodied.Counter()
+    logger = embodied.Logger(
+        step,
+        [
+            embodied.logger.TerminalOutput(),
+            embodied.logger.JSONLOutput(logdir, "metrics.jsonl"),
+            embodied.logger.TensorBoardOutput(logdir),
+            # embodied.logger.WandBOutput(logdir.name, config),
+            # embodied.logger.MLFlowOutput(logdir.name),
+        ],
+    )
 
 
-import warnings
-import dreamerv3
-from dreamerv3 import embodied
+    import gym
+    from embodied.envs import from_gym
 
-warnings.filterwarnings("ignore", ".*truncated to dtype int32.*")
+    env = PendulumEnv(gamma=1) # 
+    env = from_gym.FromGym(
+        env, obs_key="image"
+    )  # I found I had to specify a different obs_key than the default of 'image'
+    env = dreamerv3.wrap_env(env, config)
+    env = embodied.BatchEnv([env], parallel=False)
 
-# See configs.yaml for all options.
-config = embodied.Config(dreamerv3.configs["defaults"])
-config = config.update(dreamerv3.configs["large"])
-config = config.update(
-    {
-        "logdir": f"logdirtest",  # this was just changed to generate a new log dir every time for testing
-        "run.train_ratio": 64,
-        "run.log_every": 30,
-        "batch_size": 16,
-        "jax.prealloc": False,
-        "encoder.mlp_keys": ".*",
-        "decoder.mlp_keys": ".*",
-        "encoder.cnn_keys": "image",
-        "decoder.cnn_keys": "image",
-        "jax.platform": "cpu",  # I don't have a gpu locally
-    }
-)
-config = embodied.Flags(config).parse()
+    print("here---------------------------------------------")
+    agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
+    print("---------------------------------------------")
+    replay = embodied.replay.Uniform(
+        config.batch_length, config.replay_size, logdir / "replay"
+    )
+    args = embodied.Config(
+        **config.run,
+        logdir=config.logdir,
+        batch_steps=config.batch_size * config.batch_length,
+    )
+    embodied.run.train(agent, env, replay, logger, args)
 
-logdir = embodied.Path(config.logdir)
-step = embodied.Counter()
-logger = embodied.Logger(
-    step,
-    [
-        embodied.logger.TerminalOutput(),
-        embodied.logger.JSONLOutput(logdir, "metrics.jsonl"),
-        embodied.logger.TensorBoardOutput(logdir),
-        # embodied.logger.WandBOutput(logdir.name, config),
-        # embodied.logger.MLFlowOutput(logdir.name),
-    ],
-)
-
-
-import gym
-from embodied.envs import from_gym
-
-env = PendulumEnv() # 
-env = from_gym.FromGym(
-    env, obs_key="image"
-)  # I found I had to specify a different obs_key than the default of 'image'
-env = dreamerv3.wrap_env(env, config)
-env = embodied.BatchEnv([env], parallel=False)
-
-print("here---------------------------------------------")
-agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
-print("---------------------------------------------")
-replay = embodied.replay.Uniform(
-    config.batch_length, config.replay_size, logdir / "replay"
-)
-args = embodied.Config(
-    **config.run,
-    logdir=config.logdir,
-    batch_steps=config.batch_size * config.batch_length,
-)
-embodied.run.train(agent, env, replay, logger, args)
+except Exception as e:
+    # Log the error
+    logging.error(f"An error occurred: {str(e)}", exc_info=True)

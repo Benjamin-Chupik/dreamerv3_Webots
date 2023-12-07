@@ -69,7 +69,7 @@ class PendulumEnv(gym.Env):
         print(self.Obs3_pos)
 
         # SPACEY
-        self.action_space = spaces.Box(low=0, high=1,  shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=-1, high=1,  shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(
             low=0, high=255, shape=(32, 32, 3), dtype=np.uint8
         )
@@ -224,13 +224,13 @@ try:
 
     # See configs.yaml for all options.
     config = embodied.Config(dreamerv3.configs["defaults"])
-    config = config.update(dreamerv3.configs["large"])
+    config = config.update(dreamerv3.configs["xlarge"])
     config = config.update(
         {
-            "logdir": f"logdir/noObsticle_large",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"logdir/noObsticle_extraLarge",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
             "run.log_every": 30,
-            "batch_size": 8,
+            "batch_size": 4,
             "jax.prealloc": False,
             "encoder.mlp_keys": ".*",
             "decoder.mlp_keys": ".*",
