@@ -22,7 +22,7 @@ import numpy as np
 class PendulumEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 30}
 
-    def __init__(self, gamma=1):
+    def __init__(self, gamma=0.997):
         self.gamma = gamma
         
         # INITIALIZING ROBOT
@@ -120,10 +120,10 @@ class PendulumEnv(gym.Env):
             self.reward = 0
         
         # Reward Shaping
-        def phi(Position): # distance to goal
-            return np.sqrt(np.sum((Position-self.goal)**2))
-        rewardShapeTerm = phi(lastPos) - self.gamma*phi(curPos)
-        logging.error(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {phi(lastPos)} from goal.| Last Pos: {curPos},  {phi(curPos)} from goal.")
+        philp = self._phi(lastPos) 
+        phicp = self._phi(curPos)
+        rewardShapeTerm = philp-self.gamma*phicp
+        logging.error(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {philp} from goal.| Last Pos: {curPos},  {phicp} from goal.")
         self.reward += rewardShapeTerm
 
         # REWARDS
@@ -132,6 +132,8 @@ class PendulumEnv(gym.Env):
         # print(10*self._obs_avoidance(), 0.1, 0.1*self.maxtime/self.timestep)
         return self._get_obs(), self.reward, done, {}
     
+    def _phi(self, pos): # distance to goal
+        return self._distance(pos, self.goal)
 
     def reset(self):
         self.robot.step(self.timestep)
