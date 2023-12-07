@@ -236,7 +236,7 @@ try:
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "image",
             "decoder.cnn_keys": "image",
-            "jax.platform": "cpu",  # I don't have a gpu locally
+            #"jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
