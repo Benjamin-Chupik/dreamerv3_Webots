@@ -29,7 +29,7 @@ class PendulumEnv(gym.Env):
         self.timestep = 200
         self.maxtime = 1e5
         self.maxspeed = 6.28
-        self.epsilon = 0.15
+        self.epsilon = 0.5
 
         # create the Robot instance.
         self.robot = Robot()
@@ -57,7 +57,7 @@ class PendulumEnv(gym.Env):
         self.rightMotor.setVelocity(0.0)
 
         # Pedestrians
-        self.pedestrian_range = 1
+        self.pedestrian_range = 0.75
 
         # Pedestrian 1
         self.ped1 = self.supervisor.getFromDef("PED1")
@@ -110,11 +110,12 @@ class PendulumEnv(gym.Env):
         
         # check if done
         done = False
+
         if self.timespent > self.maxtime: # time in ms
             self.reward = 0
             done = True
         if self.d_to_goal < self.epsilon:
-            self.reward = 0.1*self.maxtime/self.timestep
+            self.reward = self.maxtime/self.timestep
             done = True
         else:
             self.reward = 0
@@ -127,14 +128,14 @@ class PendulumEnv(gym.Env):
         self.reward += rewardShapeTerm
 
         # REWARDS
-        self.reward += 10*self._obs_avoidance()
+        self.reward += 5*self._obs_avoidance()
         self.reward -= 0.1
         # print(10*self._obs_avoidance(), 0.1, 0.1*self.maxtime/self.timestep)
-        logging.error(f"Reward: {self.reward}, Shaping Term: {rewardShapeTerm}, obs term: {10*self._obs_avoidance()}, Step: {-.1}")
+        logging.error(f"Reward: {self.reward}, Shaping Term: {rewardShapeTerm}, obs term: {5*self._obs_avoidance()}, Step: {-.1}")
         return self._get_obs(), self.reward, done, {}
     
     def _phi(self, pos): # distance to goal
-        return self._distance(pos, self.goal)
+        return 0.1*self._distance(pos, self.goal)
 
     def reset(self):
         self.robot.step(self.timestep)
@@ -165,12 +166,12 @@ class PendulumEnv(gym.Env):
 
         
         # randomize ball pos
-        xpos = np.array([0, 2.45])
-        ypos = np.array([-2.45, 2.45])
+        xpos = np.array([0, 2.2])
+        ypos = np.array([-2.2, 2.2])
         newpos = np.zeros(3)
         newpos[0] = np.random.choice(xpos, 1)[0]
         newpos[1] = np.random.choice(ypos, 1)[0]
-        newpos[2] = 0.05
+        newpos[2] = 0.3
         
         # set ball pos
         self.ball_trans.setSFVec3f(list(newpos))
@@ -203,6 +204,7 @@ class PendulumEnv(gym.Env):
         
 
     def _distance(self, pos1, pos2):
+        #xy distance
         return np.sqrt(np.sum((pos1[:2]-pos2[:2])**2))
     
     def render(self, mode="human"):
@@ -238,7 +240,7 @@ try:
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "image",
             "decoder.cnn_keys": "image",
-            #"jax.platform": "cpu",  # I don't have a gpu locally
+            "jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()

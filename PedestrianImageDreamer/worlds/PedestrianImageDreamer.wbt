@@ -41,9 +41,9 @@ DEF _BEEPY_ E-puck {
   camera_height 32
 }
 DEF BALL Ball {
-  translation 2.45 2.45 0.05
+  translation 2.2 2.2 0.3
   color 1 0 0
-  radius 0.05
+  radius 0.3
 }
 DEF PED1 Pedestrian {
   translation 0 -2.25 1.27
