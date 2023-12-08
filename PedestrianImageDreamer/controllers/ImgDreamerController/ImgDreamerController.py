@@ -135,7 +135,7 @@ class PendulumEnv(gym.Env):
         return self._get_obs(), self.reward, done, {}
     
     def _phi(self, pos): # distance to goal
-        return 0.1*self._distance(pos, self.goal)
+        return 0.2*self._distance(pos, self.goal)
 
     def reset(self):
         self.robot.step(self.timestep)
@@ -240,7 +240,7 @@ try:
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "image",
             "decoder.cnn_keys": "image",
-            "jax.platform": "cpu",  # I don't have a gpu locally
+            # "jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
@@ -262,7 +262,7 @@ try:
     import gym
     from embodied.envs import from_gym
 
-    env = PendulumEnv(gamma=1) # 
+    env = PendulumEnv(gamma=0.997) # 
     env = from_gym.FromGym(
         env, obs_key="image"
     )  # I found I had to specify a different obs_key than the default of 'image'
