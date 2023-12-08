@@ -121,15 +121,16 @@ class PendulumEnv(gym.Env):
         
         # Reward Shaping
         def phi(Position): # distance to goal
-            return np.sqrt(np.sum((Position-self.goal)**2))
+            return 1000*np.sqrt(np.sum((Position-self.goal)**2))
         rewardShapeTerm = phi(lastPos) - self.gamma*phi(curPos)
-        logging.error(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {phi(lastPos)} from goal.| Last Pos: {curPos},  {phi(curPos)} from goal.")
+        #logging.error(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {phi(lastPos)} from goal.| Last Pos: {curPos},  {phi(curPos)} from goal.")
         self.reward += rewardShapeTerm
 
         # REWARDS
         self.reward += 10*self._obs_avoidance()
         self.reward -= 0.1
         # print(10*self._obs_avoidance(), 0.1, 0.1*self.maxtime/self.timestep)
+        logging.error(f"Reward: {self.reward}, Shaping Term: {rewardShapeTerm}, obs term: {10*self._obs_avoidance()}, Step: {-.1}")
         return self._get_obs(), self.reward, done, {}
     
 
@@ -226,7 +227,7 @@ try:
     config = config.update(dreamerv3.configs["large"])
     config = config.update(
         {
-            "logdir": f"logdir/PedTestFromScratch",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"logdir/PedTestFromScratch_newReward",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
             "run.log_every": 30,
             "batch_size": 16,
