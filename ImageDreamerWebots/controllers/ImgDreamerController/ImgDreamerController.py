@@ -82,19 +82,12 @@ class PendulumEnv(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _updateObs(self):
-        image_array = self.camera.getImageArray() # there is a 4th column for alpha
-        self.img = np.array(image_array) #np.array([r,g,b])
-        #plt.imshow(self.img)
-        #plt.show()
 
     def step(self, u):
         ## SNEAKY WEBOTS STEP
         # Update timestep
         self.robot.step(self.timestep)
         self.timespent += self.timestep
-
-        self._updateObs()
 
         lastPos = np.asarray(self.robot_trans.getSFVec3f())
         lastPosToGoal = np.sqrt(np.sum((lastPos-self.goal)**2))
@@ -185,6 +178,12 @@ class PendulumEnv(gym.Env):
         return self._get_obs()
 
     def _get_obs(self):
+        self.img = np.asarray(self.camera.getImageArray()).astype(np.uint8)
+        #logging.error(f"Image shape: {self.img.shape}")
+        #logging.error(f"Image type: {self.img.dtype}")
+        # print(self.img.shape)
+        if np.sum(self.img) == 0:
+            print('uh oh')
         return self.img
     
     def _obs_avoidance(self):
