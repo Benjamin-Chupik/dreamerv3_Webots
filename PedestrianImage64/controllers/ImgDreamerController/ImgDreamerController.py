@@ -77,7 +77,7 @@ class PendulumEnv(gym.Env):
         # SPACEY
         self.action_space = spaces.Box(low=-1, high=1,  shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(32, 32, 3), dtype=np.uint8
+            low=0, high=255, shape=(64, 64, 3), dtype=np.uint8
         )
         self.seed()
 
@@ -94,7 +94,7 @@ class PendulumEnv(gym.Env):
         curPos = np.asarray(self.robot_trans.getSFVec3f())
 
         ## Update image
-        self.img = np.asarray(self.camera.getImageArray())
+        # self.img = np.asarray(self.camera.getImageArray())
 
         # udpate
         self.ped1_pos = np.asarray(self.ped1_trans.getSFVec3f())
@@ -123,8 +123,8 @@ class PendulumEnv(gym.Env):
         # Reward Shaping
         philp = self._phi(lastPos) 
         phicp = self._phi(curPos)
-        #rewardShapeTerm = philp-self.gamma*phicp
-        rewardShapeTerm=0
+        rewardShapeTerm = philp-self.gamma*phicp
+        # rewardShapeTerm=0
         #logging.info(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {philp} from goal.| Last Pos: {curPos},  {phicp} from goal.")
         self.reward += rewardShapeTerm
 
@@ -136,7 +136,7 @@ class PendulumEnv(gym.Env):
         return self._get_obs(), self.reward, done, {}
     
     def _phi(self, pos): # distance to goal
-        return 200*self._distance(pos, self.goal)
+        return 20*self._distance(pos, self.goal)
 
     def reset(self):
         self.robot.step(self.timestep)
@@ -159,6 +159,14 @@ class PendulumEnv(gym.Env):
         self.ped1_pos = np.asarray(self.ped1_trans.getSFVec3f())
         self.ped2_pos = np.asarray(self.ped2_trans.getSFVec3f())
 
+        
+        self.ped1_trans.setSFVec3f([self.ped1_pos[0],self.ped1_pos[1],1.27])
+        self.ped2_trans.setSFVec3f([self.ped2_pos[0],self.ped2_pos[1],1.27])
+
+        self.ped1_pos = np.asarray(self.ped1_trans.getSFVec3f())
+        self.ped2_pos = np.asarray(self.ped2_trans.getSFVec3f())
+        # print(self.ped1_pos)
+
         # reset robot
         self.robot_trans.setSFVec3f([-2.25,0,0])
         self.robot_rot.setSFRotation([0,0,1,0])
@@ -179,14 +187,15 @@ class PendulumEnv(gym.Env):
 
         # set goal value
         self.goal = np.asarray(self.ball_trans.getSFVec3f())
-
         # Get observation
         self.robot.step(self.timestep)
-        self.img = np.asarray(self.camera.getImageArray())
+        
         # np.save('beepyview', self.img)
         return self._get_obs()
 
     def _get_obs(self):
+        self.img = np.asarray(self.camera.getImageArray())
+        # print(self.img.shape)
         if np.sum(self.img) == 0:
             print('uh oh')
         return self.img
@@ -197,7 +206,7 @@ class PendulumEnv(gym.Env):
         d2 = self._distance(self.robot_pos, self.ped2_pos)
 
         if d1 < self.pedestrian_range or d2 < self.pedestrian_range:
-            total += -10
+            total += -1
 
         return total
         
@@ -230,7 +239,7 @@ try:
     config = config.update(dreamerv3.configs["large"])
     config = config.update(
         {
-            "logdir": f"logdir/PedTestFromScratch_bigBall1",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"logdir/Lasthope",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
             "run.log_every": 30,
             "batch_size": 8,
@@ -261,7 +270,7 @@ try:
     import gym
     from embodied.envs import from_gym
 
-    env = PendulumEnv(gamma=0.997) # 
+    env = PendulumEnv() # 
     env = from_gym.FromGym(
         env, obs_key="image"
     )  # I found I had to specify a different obs_key than the default of 'image'
@@ -271,19 +280,19 @@ try:
     print("here---------------------------------------------")
     agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
     print("---------------------------------------------")
-    # replay = embodied.replay.Uniform(
-    #     config.batch_length, config.replay_size, logdir / "replay"
-    # )
+    replay = embodied.replay.Uniform(
+        config.batch_length, config.replay_size, logdir / "replay"
+    )
     args = embodied.Config(
         **config.run,
         logdir=config.logdir,
         batch_steps=config.batch_size * config.batch_length,
     )
-    args = args.update({'from_checkpoint':'logdir/PedTestFromScratch_newReward/checkpoint.ckpt'
-    })
+    # args = args.update({'from_checkpoint':'logdir/PedTestFromScratch_newReward/checkpoint.ckpt'
+    # })
         
-    #embodied.run.train(agent, env, replay, logger, args)
-    embodied.run.eval_only(agent, env, logger, args)
+    embodied.run.train(agent, env, replay, logger, args)
+    #embodied.run.eval_only(agent, env, logger, args)
 
 except Exception as e:
     # Log the error
