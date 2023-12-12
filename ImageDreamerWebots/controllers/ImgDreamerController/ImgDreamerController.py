@@ -284,7 +284,7 @@ try:
             batch_steps=config.batch_size * config.batch_length,
             )
         
-        args = args.update({'from_checkpoint':'/home/ben/ARC/Documents/Education/CU_Boulder_Graduate/Fall_2023/dreamerv3_webots/ImageDreamerWebots/controllers/ImgDreamerController/logdir/noObsticle_extraLarge/checkpoint.ckpt'
+        args = args.update({'from_checkpoint':'logdir/noObsticle_extraLarge/checkpoint.ckpt'
             })
             
         #embodied.run.train(agent, env, replay, logger, args)
