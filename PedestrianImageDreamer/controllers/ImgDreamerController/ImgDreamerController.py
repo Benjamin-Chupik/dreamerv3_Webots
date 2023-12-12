@@ -27,7 +27,7 @@ class PendulumEnv(gym.Env):
         
         # INITIALIZING ROBOT
         self.timestep = 200
-        self.maxtime = 1e5
+        self.maxtime = 3*60e3
         self.maxspeed = 6.28
         self.epsilon = 0.5
 
@@ -115,7 +115,7 @@ class PendulumEnv(gym.Env):
             self.reward = 0
             done = True
         if self.d_to_goal < self.epsilon:
-            self.reward = self.maxtime/self.timestep
+            self.reward = 100
             done = True
         else:
             self.reward = 0
@@ -123,19 +123,20 @@ class PendulumEnv(gym.Env):
         # Reward Shaping
         philp = self._phi(lastPos) 
         phicp = self._phi(curPos)
-        rewardShapeTerm = philp-self.gamma*phicp
-        logging.error(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {philp} from goal.| Last Pos: {curPos},  {phicp} from goal.")
+        #rewardShapeTerm = philp-self.gamma*phicp
+        rewardShapeTerm=0
+        #logging.info(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {philp} from goal.| Last Pos: {curPos},  {phicp} from goal.")
         self.reward += rewardShapeTerm
 
         # REWARDS
-        self.reward += 5*self._obs_avoidance()
-        self.reward -= 0.1
+        self.reward += self._obs_avoidance()
+        #self.reward -= 0.1
         # print(10*self._obs_avoidance(), 0.1, 0.1*self.maxtime/self.timestep)
-        logging.error(f"Reward: {self.reward}, Shaping Term: {rewardShapeTerm}, obs term: {5*self._obs_avoidance()}, Step: {-.1}")
+        #logging.info(f"Reward: {self.reward}, Shaping Term: {rewardShapeTerm}, obs term: {5*self._obs_avoidance()}, Step: {-.1}")
         return self._get_obs(), self.reward, done, {}
     
     def _phi(self, pos): # distance to goal
-        return 0.2*self._distance(pos, self.goal)
+        return 200*self._distance(pos, self.goal)
 
     def reset(self):
         self.robot.step(self.timestep)
@@ -195,10 +196,8 @@ class PendulumEnv(gym.Env):
         d1 = self._distance(self.robot_pos, self.ped1_pos)
         d2 = self._distance(self.robot_pos, self.ped2_pos)
 
-        if d1 < self.pedestrian_range:
-            total += -0.5*(1/d1-1/self.pedestrian_range)**2
-        if d2 < self.pedestrian_range:
-            total += -0.5*(1/d2-1/self.pedestrian_range)**2
+        if d1 < self.pedestrian_range or d2 < self.pedestrian_range:
+            total += -10
 
         return total
         
@@ -231,10 +230,10 @@ try:
     config = config.update(dreamerv3.configs["large"])
     config = config.update(
         {
-            "logdir": f"logdir/PedTestFromScratch_newReward",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"logdir/PedTestFromScratch_bigBall1",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
             "run.log_every": 30,
-            "batch_size": 16,
+            "batch_size": 8,
             "jax.prealloc": False,
             "encoder.mlp_keys": ".*",
             "decoder.mlp_keys": ".*",

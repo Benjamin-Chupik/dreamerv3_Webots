@@ -16,6 +16,8 @@ from gym import spaces
 from gym.utils import seeding
 import numpy as np
 
+
+
 # -----------------------------------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------------------------------
@@ -88,14 +90,16 @@ class PendulumEnv(gym.Env):
 
     def step(self, u):
         ## SNEAKY WEBOTS STEP
+        # Update timestep
+        self.robot.step(self.timestep)
+        self.timespent += self.timestep
+
         self._updateObs()
 
         lastPos = np.asarray(self.robot_trans.getSFVec3f())
         lastPosToGoal = np.sqrt(np.sum((lastPos-self.goal)**2))
         
-        # Update timestep
-        self.robot.step(self.timestep)
-        self.timespent += self.timestep
+        
 
         curPos = np.asarray(self.robot_trans.getSFVec3f())
         curPosToGoal = np.sqrt(np.sum((curPos-self.goal)**2))
@@ -139,6 +143,7 @@ class PendulumEnv(gym.Env):
     
 
     def reset(self):
+        self.robot.step(self.timestep)
 
         self.timespent = 0
         # reset robot
@@ -222,61 +227,70 @@ logging.basicConfig(filename='error_log.txt', level=logging.ERROR, format='%(asc
 
 try:
 
-    # See configs.yaml for all options.
-    config = embodied.Config(dreamerv3.configs["defaults"])
-    config = config.update(dreamerv3.configs["xlarge"])
-    config = config.update(
-        {
-            "logdir": f"logdir/noObsticle_extraLarge",  # this was just changed to generate a new log dir every time for testing
-            "run.train_ratio": 64,
-            "run.log_every": 30,
-            "batch_size": 4,
-            "jax.prealloc": False,
-            "encoder.mlp_keys": ".*",
-            "decoder.mlp_keys": ".*",
-            "encoder.cnn_keys": "image",
-            "decoder.cnn_keys": "image",
-            #"jax.platform": "cpu",  # I don't have a gpu locally
-        }
-    )
-    config = embodied.Flags(config).parse()
+    def train():
+        # See configs.yaml for all options.
+        config = embodied.Config(dreamerv3.configs["defaults"])
+        config = config.update(dreamerv3.configs["xlarge"])
+        config = config.update(
+            {
+                "logdir": f"logdir/noObsticle_extraLarge",  # this was just changed to generate a new log dir every time for testing
+                "run.train_ratio": 64,
+                "run.log_every": 30,
+                "batch_size": 4,
+                "jax.prealloc": False,
+                "encoder.mlp_keys": ".*",
+                "decoder.mlp_keys": ".*",
+                "encoder.cnn_keys": "image",
+                "decoder.cnn_keys": "image",
+                "jax.platform": "cpu",  # I don't have a gpu locally
 
-    logdir = embodied.Path(config.logdir)
-    step = embodied.Counter()
-    logger = embodied.Logger(
-        step,
-        [
-            embodied.logger.TerminalOutput(),
-            embodied.logger.JSONLOutput(logdir, "metrics.jsonl"),
-            embodied.logger.TensorBoardOutput(logdir),
-            # embodied.logger.WandBOutput(logdir.name, config),
-            # embodied.logger.MLFlowOutput(logdir.name),
-        ],
-    )
+            }
+        )
+        config = embodied.Flags(config).parse()
+
+        logdir = embodied.Path(config.logdir)
+        step = embodied.Counter()
+        logger = embodied.Logger(
+            step,
+            [
+                embodied.logger.TerminalOutput(),
+                embodied.logger.JSONLOutput(logdir, "metrics.jsonl"),
+                embodied.logger.TensorBoardOutput(logdir),
+                # embodied.logger.WandBOutput(logdir.name, config),
+                # embodied.logger.MLFlowOutput(logdir.name),
+            ],
+        )
 
 
-    import gym
-    from embodied.envs import from_gym
+        import gym
+        from embodied.envs import from_gym
 
-    env = PendulumEnv() # 
-    env = from_gym.FromGym(
-        env, obs_key="image"
-    )  # I found I had to specify a different obs_key than the default of 'image'
-    env = dreamerv3.wrap_env(env, config)
-    env = embodied.BatchEnv([env], parallel=False)
+        env = PendulumEnv() # 
+        env = from_gym.FromGym(
+            env, obs_key="image"
+        )  # I found I had to specify a different obs_key than the default of 'image'
+        env = dreamerv3.wrap_env(env, config)
+        env = embodied.BatchEnv([env], parallel=False)
 
-    print("here---------------------------------------------")
-    agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
-    print("---------------------------------------------")
-    replay = embodied.replay.Uniform(
-        config.batch_length, config.replay_size, logdir / "replay"
-    )
-    args = embodied.Config(
-        **config.run,
-        logdir=config.logdir,
-        batch_steps=config.batch_size * config.batch_length,
-    )
-    embodied.run.train(agent, env, replay, logger, args)
+        print("here---------------------------------------------")
+        agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
+        print("---------------------------------------------")
+        replay = embodied.replay.Uniform(
+            config.batch_length, config.replay_size, logdir / "replay"
+        )
+        args = embodied.Config(
+            **config.run,
+            logdir=config.logdir,
+            batch_steps=config.batch_size * config.batch_length,
+            )
+        
+        args = args.update({'from_checkpoint':'/home/ben/ARC/Documents/Education/CU_Boulder_Graduate/Fall_2023/dreamerv3_webots/ImageDreamerWebots/controllers/ImgDreamerController/logdir/noObsticle_extraLarge/checkpoint.ckpt'
+            })
+            
+        #embodied.run.train(agent, env, replay, logger, args)
+        embodied.run.eval_only(agent, env, logger, args)
+
+    train()
 except Exception as e:
     # Log the error
     logging.error(f"An error occurred: {str(e)}", exc_info=True)
