@@ -239,7 +239,7 @@ try:
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "image",
             "decoder.cnn_keys": "image",
-            # "jax.platform": "cpu",  # I don't have a gpu locally
+            "jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
@@ -279,7 +279,11 @@ try:
         logdir=config.logdir,
         batch_steps=config.batch_size * config.batch_length,
     )
-    embodied.run.train(agent, env, replay, logger, args)
+    args = args.update({'from_checkpoint':'logdir/PedTestFromScratch_newReward/checkpoint.ckpt'
+    })
+        
+    #embodied.run.train(agent, env, replay, logger, args)
+    embodied.run.eval_only(agent, env, logger, args)
 
 except Exception as e:
     # Log the error
