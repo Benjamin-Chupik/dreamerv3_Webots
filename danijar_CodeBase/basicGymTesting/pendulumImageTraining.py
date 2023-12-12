@@ -58,8 +58,17 @@ def main():
     )
 
     # Train
-    embodied.run.train(agent, env, replay, logger, args)
-    # embodied.run.eval_only(agent, env, logger, args)
+    isTrain = False
+    if isTrain:
+        # make the replay buffer
+        replay = embodied.replay.Uniform(
+            config.batch_length, config.replay_size, logdir / "replay"
+        )
+        embodied.run.train(agent, env, replay, logger, args)
+    else:
+        args = args.update({'from_checkpoint':f'{logdir}/checkpoint.ckpt'
+        })
+        embodied.run.eval_only(agent, env, logger, args)
 
 
 if __name__ == "__main__":
