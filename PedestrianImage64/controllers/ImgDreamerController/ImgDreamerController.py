@@ -194,7 +194,9 @@ class PendulumEnv(gym.Env):
         return self._get_obs()
 
     def _get_obs(self):
-        self.img = np.asarray(self.camera.getImageArray())
+        self.img = np.asarray(self.camera.getImageArray()).astype(np.uint8)
+        #logging.error(f"Image shape: {self.img.shape}")
+        #logging.error(f"Image type: {self.img.dtype}")
         # print(self.img.shape)
         if np.sum(self.img) == 0:
             print('uh oh')
@@ -216,7 +218,7 @@ class PendulumEnv(gym.Env):
         return np.sqrt(np.sum((pos1[:2]-pos2[:2])**2))
     
     def render(self, mode="human"):
-        pass
+        return self.img
 
     def close(self):
         if self.viewer:
@@ -239,7 +241,7 @@ try:
     config = config.update(dreamerv3.configs["large"])
     config = config.update(
         {
-            "logdir": f"logdir/Lasthope",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"logdir/finalHope",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
             "run.log_every": 30,
             "batch_size": 8,
@@ -248,7 +250,7 @@ try:
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "image",
             "decoder.cnn_keys": "image",
-            "jax.platform": "cpu",  # I don't have a gpu locally
+            #"jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
@@ -280,19 +282,25 @@ try:
     print("here---------------------------------------------")
     agent = dreamerv3.Agent(env.obs_space, env.act_space, step, config)
     print("---------------------------------------------")
-    replay = embodied.replay.Uniform(
-        config.batch_length, config.replay_size, logdir / "replay"
-    )
+
     args = embodied.Config(
         **config.run,
         logdir=config.logdir,
         batch_steps=config.batch_size * config.batch_length,
     )
-    # args = args.update({'from_checkpoint':'logdir/PedTestFromScratch_newReward/checkpoint.ckpt'
-    # })
-        
-    embodied.run.train(agent, env, replay, logger, args)
-    #embodied.run.eval_only(agent, env, logger, args)
+    
+    isTrain=True
+
+    if isTrain:
+        replay = embodied.replay.Uniform(
+            config.batch_length, config.replay_size, logdir / "replay"
+            )
+        embodied.run.train(agent, env, replay, logger, args)
+    else:
+        args = args.update({'from_checkpoint':'logdir/Lasthope/checkpoint.ckpt'
+            })
+        #env.render()
+        embodied.run.eval_only(agent, env, logger, args)
 
 except Exception as e:
     # Log the error
