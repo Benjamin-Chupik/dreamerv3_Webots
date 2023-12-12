@@ -12,8 +12,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.03266025179290355 -0.997523708302081 0.062287714102292065 5.315345517115273
-  position -2.676030434385949 -0.23749571383054185 3.7409260138659763
+  orientation -0.05419177340061183 -0.9584103206405805 0.2802015506475943 5.884983486371299
+  position -4.328223678523678 0.0794020030075297 1.6678964144832924
 }
 TexturedBackground {
   skyColor [
@@ -65,8 +65,8 @@ DEF Obstacle2 SolidBox {
 DEF _BEEPY_ E-puck {
   controller "ImgDreamerController"
   supervisor TRUE
-  camera_width 32
-  camera_height 32
+  camera_width 64
+  camera_height 64
 }
 DEF BALL Ball {
   translation 0.45 0.45 0.05

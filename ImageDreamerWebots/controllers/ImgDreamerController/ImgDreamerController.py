@@ -25,9 +25,12 @@ import numpy as np
 class PendulumEnv(gym.Env):
     metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 30}
 
-    def __init__(self):
+    def __init__(self, gamma=0.997):
+        self.gamma = gamma
+
         # INITIALIZING ROBOT
         self.timestep = 200
+        self.maxtime = 60e3
         self.maxspeed = 6.28
         self.epsilon = 0.15
 
@@ -46,8 +49,6 @@ class PendulumEnv(gym.Env):
         # Ball object
         self.ball = self.supervisor.getFromDef("BALL")
         self.ball_trans= self.ball.getField("translation")
-
-
         # Setting up  motors
         self.leftMotor = self.robot.getDevice('left wheel motor')
         self.rightMotor = self.robot.getDevice('right wheel motor')
@@ -57,6 +58,9 @@ class PendulumEnv(gym.Env):
         self.rightMotor.setVelocity(0.0)
 
         # Obstacles
+
+        self.obs_range = 0.08
+
         self.Obs1 = self.supervisor.getFromDef("Obstacle1")
         self.Obs1_trans= self.Obs1.getField("translation")
         self.Obs1_pos = np.asarray(self.Obs1_trans.getSFVec3f())
@@ -73,10 +77,9 @@ class PendulumEnv(gym.Env):
         # SPACEY
         self.action_space = spaces.Box(low=-1, high=1,  shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(32, 32, 3), dtype=np.uint8
+            low=0, high=255, shape=(64, 64, 3), dtype=np.uint8
         )
         self.seed()
-        self._updateObs()
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -84,53 +87,42 @@ class PendulumEnv(gym.Env):
 
 
     def step(self, u):
-        ## SNEAKY WEBOTS STEP
+        lastPos = np.asarray(self.robot_trans.getSFVec3f())
         # Update timestep
         self.robot.step(self.timestep)
         self.timespent += self.timestep
 
-        lastPos = np.asarray(self.robot_trans.getSFVec3f())
-        lastPosToGoal = np.sqrt(np.sum((lastPos-self.goal)**2))
-        
-        
-
         curPos = np.asarray(self.robot_trans.getSFVec3f())
-        curPosToGoal = np.sqrt(np.sum((curPos-self.goal)**2))
-    
 
-        distTravledToGoal = -(curPosToGoal - lastPosToGoal)
-        #logging.error(f"Position Difference: {distTravledToGoal}")
-
-        
         # write actuators inputs
         self.leftMotor.setVelocity(u[0] * self.maxspeed)
         self.rightMotor.setVelocity(u[1] * self.maxspeed)
 
-        done = False
-        if self.timespent > (2*60) * 1e3: # time in ms
-            done = True
-        
-        # REWARDS
+        # update robot position
         self.robot_pos = np.asarray(self.robot_trans.getSFVec3f())
-        self.d_to_goal = np.sqrt(np.sum((self.robot_pos-self.goal)**2))
+        self.d_to_goal = self._distance(self.robot_pos, self.goal)
         
         # check if done
         done = False
-        if self.timespent > 3e4: # time in ms
+
+        if self.timespent > self.maxtime: # time in ms
+            self.reward = 0
             done = True
         if self.d_to_goal < self.epsilon:
             self.reward = 100
             done = True
         else:
             self.reward = 0
+        
+        # Reward Shaping
+        philp = self._phi(lastPos) 
+        phicp = self._phi(curPos)
+        rewardShapeTerm = philp-self.gamma*phicp
+        self.reward += rewardShapeTerm
 
-        # self.reward += np.sum(self.img[:,:,0])/(32*32*255)
-        #self.reward+= self._obs_avoidance()
-
-        self.reward+=distTravledToGoal*10**2
-
-        # Add a -1 reward for every step to incentivise getting there fast
-        self.reward+=-1
+        # REWARDS
+        self.reward += self._obs_avoidance()
+        self.reward -= 0.2
         
         return self._get_obs(), self.reward, done, {}
     
@@ -156,32 +148,15 @@ class PendulumEnv(gym.Env):
 
         # set ball pos
         self.ball_trans.setSFVec3f(list(newpos))
-
         self.goal = np.asarray(self.ball_trans.getSFVec3f())
 
-        # Get observation
-        self._updateObs()
-        # wait untill the image is not all black
-        i=0
-        while np.all(self._get_obs()==0):
-            i+=1
-            logging.error(f"Image is fully black for {i} steps on reset")
-            # Update timestep
-            self.robot.step(self.timestep)
-            self.timespent += self.timestep
-            self._updateObs()
-
-        np.save('beepyview', self.img)
-
-
-
         return self._get_obs()
-
+    
+    def _phi(self, pos): # distance to goal
+        return 10*self._distance(pos, self.goal)
+    
     def _get_obs(self):
         self.img = np.asarray(self.camera.getImageArray()).astype(np.uint8)
-        #logging.error(f"Image shape: {self.img.shape}")
-        #logging.error(f"Image type: {self.img.dtype}")
-        # print(self.img.shape)
         if np.sum(self.img) == 0:
             print('uh oh')
         return self.img
@@ -191,19 +166,15 @@ class PendulumEnv(gym.Env):
         d1 = self._distance(self.robot_pos, self.Obs1_pos)
         d2 = self._distance(self.robot_pos, self.Obs2_pos)
         d3 = self._distance(self.robot_pos, self.Obs3_pos)
-        prox = self.epsilon
 
-        if d1 < prox:
-            total += -0.5*(1/d1-1/prox)**2
-        if d2 < prox:
-            total += -0.5*(1/d2-1/prox)**2
-        if d3 < prox:
-            total += -0.5*(1/d3-1/prox)**2
+        if d1 < self.obs_range or d2 < self.obs_range or d3 < self.obs_range:
+            total += -1
+
         return total
         
 
     def _distance(self, pos1, pos2):
-        return np.sqrt(np.sum((pos1-pos2)**2))
+        return np.sqrt(np.sum((pos1[:2]-pos2[:2])**2))
     
     def render(self, mode="human"):
         pass
@@ -229,10 +200,10 @@ try:
     def train():
         # See configs.yaml for all options.
         config = embodied.Config(dreamerv3.configs["defaults"])
-        config = config.update(dreamerv3.configs["xlarge"])
+        config = config.update(dreamerv3.configs["large"])
         config = config.update(
             {
-                "logdir": f"logdir/noObsticle_extraLarge",  # this was just changed to generate a new log dir every time for testing
+                "logdir": f"logdir/Obstacles",  # this was just changed to generate a new log dir every time for testing
                 "run.train_ratio": 64,
                 "run.log_every": 30,
                 "batch_size": 4,
@@ -241,7 +212,7 @@ try:
                 "decoder.mlp_keys": ".*",
                 "encoder.cnn_keys": "image",
                 "decoder.cnn_keys": "image",
-                "jax.platform": "cpu",  # I don't have a gpu locally
+                # "jax.platform": "cpu",  # I don't have a gpu locally
 
             }
         )
@@ -283,11 +254,18 @@ try:
             batch_steps=config.batch_size * config.batch_length,
             )
         
-        args = args.update({'from_checkpoint':'logdir/noObsticle_extraLarge/checkpoint.ckpt'
-            })
-            
-        #embodied.run.train(agent, env, replay, logger, args)
-        embodied.run.eval_only(agent, env, logger, args)
+        isTrain=True
+
+        if isTrain:
+            replay = embodied.replay.Uniform(
+                config.batch_length, config.replay_size, logdir / "replay"
+                )
+            embodied.run.train(agent, env, replay, logger, args)
+        else:
+            args = args.update({'from_checkpoint':'logdir/Lasthope/checkpoint.ckpt'
+                })
+            #env.render()
+            embodied.run.eval_only(agent, env, logger, args)
 
     train()
 except Exception as e:

@@ -93,9 +93,6 @@ class PendulumEnv(gym.Env):
 
         curPos = np.asarray(self.robot_trans.getSFVec3f())
 
-        ## Update image
-        # self.img = np.asarray(self.camera.getImageArray())
-
         # udpate
         self.ped1_pos = np.asarray(self.ped1_trans.getSFVec3f())
         self.ped2_pos = np.asarray(self.ped2_trans.getSFVec3f())
@@ -124,19 +121,16 @@ class PendulumEnv(gym.Env):
         philp = self._phi(lastPos) 
         phicp = self._phi(curPos)
         rewardShapeTerm = philp-self.gamma*phicp
-        # rewardShapeTerm=0
-        #logging.info(f"rewardShapeTerm: {rewardShapeTerm:0.6} | Last Pos: {lastPos},  {philp} from goal.| Last Pos: {curPos},  {phicp} from goal.")
         self.reward += rewardShapeTerm
 
         # REWARDS
         self.reward += self._obs_avoidance()
-        #self.reward -= 0.1
-        # print(10*self._obs_avoidance(), 0.1, 0.1*self.maxtime/self.timestep)
-        #logging.info(f"Reward: {self.reward}, Shaping Term: {rewardShapeTerm}, obs term: {5*self._obs_avoidance()}, Step: {-.1}")
+        self.reward -= 0.2
+
         return self._get_obs(), self.reward, done, {}
     
     def _phi(self, pos): # distance to goal
-        return 20*self._distance(pos, self.goal)
+        return 10*self._distance(pos, self.goal)
 
     def reset(self):
         self.robot.step(self.timestep)
@@ -165,7 +159,6 @@ class PendulumEnv(gym.Env):
 
         self.ped1_pos = np.asarray(self.ped1_trans.getSFVec3f())
         self.ped2_pos = np.asarray(self.ped2_trans.getSFVec3f())
-        # print(self.ped1_pos)
 
         # reset robot
         self.robot_trans.setSFVec3f([-2.25,0,0])
@@ -195,9 +188,6 @@ class PendulumEnv(gym.Env):
 
     def _get_obs(self):
         self.img = np.asarray(self.camera.getImageArray()).astype(np.uint8)
-        #logging.error(f"Image shape: {self.img.shape}")
-        #logging.error(f"Image type: {self.img.dtype}")
-        # print(self.img.shape)
         if np.sum(self.img) == 0:
             print('uh oh')
         return self.img
@@ -250,7 +240,7 @@ try:
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "image",
             "decoder.cnn_keys": "image",
-            #"jax.platform": "cpu",  # I don't have a gpu locally
+            # "jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     config = embodied.Flags(config).parse()
