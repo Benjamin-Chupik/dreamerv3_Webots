@@ -198,7 +198,7 @@ class PendulumEnv(gym.Env):
         d2 = self._distance(self.robot_pos, self.ped2_pos)
 
         if d1 < self.pedestrian_range or d2 < self.pedestrian_range:
-            total += -1
+            total += -10
 
         return total
         
@@ -231,7 +231,7 @@ try:
     config = config.update(dreamerv3.configs["large"])
     config = config.update(
         {
-            "logdir": f"logdir/finalHope",  # this was just changed to generate a new log dir every time for testing
+            "logdir": f"logdir/finalHope_newRewards_m10",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
             "run.log_every": 30,
             "batch_size": 8,

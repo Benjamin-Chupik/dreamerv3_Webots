@@ -45,14 +45,14 @@ def defaultConfig(config):
         {
             "logdir": f"danijar_CodeBase/basicGymTesting/logdir/PendulumImageGPU",  # this was just changed to generate a new log dir every time for testing
             "run.train_ratio": 64,
-            "run.log_every": 50,
+            "run.log_every": 30,
             "batch_size": 8,
             "jax.prealloc": False,
             "encoder.mlp_keys": ".*",
             "decoder.mlp_keys": ".*",
             "encoder.cnn_keys": "image",
             "decoder.cnn_keys": "image",
-            "jax.platform": "cpu",  # I don't have a gpu locally
+            #"jax.platform": "cpu",  # I don't have a gpu locally
         }
     )
     return config
